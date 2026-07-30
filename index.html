@@ -2108,9 +2108,10 @@ async function renderSettings(main){
 
       <div class="settings-section">
         <h3>💾 数据备份与恢复</h3>
-        <div class="desc">所有数据存储于浏览器本地IndexedDB。建议定期导出备份。</div>
+        <div class="desc">所有数据存储于浏览器本地IndexedDB。建议定期导出备份。JSON用于恢复导入，Markdown用于阅读归档。</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-primary" id="exportBtn">⬇️ 导出全部数据</button>
+          <button class="btn btn-primary" id="exportBtn">⬇️ 导出全部数据(JSON)</button>
+          <button class="btn btn-ghost" id="exportMdBtn">📄 导出为文档(MD)</button>
           <button class="btn btn-ghost" id="importBtn">⬆️ 导入数据</button>
           <input type="file" id="importFile" accept=".json" style="display:none">
           <button class="btn btn-danger" id="clearBtn">🗑️ 清空所有数据</button>
@@ -2206,6 +2207,7 @@ async function renderSettings(main){
     btn.innerHTML=old;btn.disabled=false;
   };
   $('#exportBtn').onclick=exportAllData;
+  $('#exportMdBtn').onclick=exportAsMarkdown;
   $('#importBtn').onclick=()=>$('#importFile').click();
   $('#importFile').onchange=importAllData;
   $('#clearBtn').onclick=clearAllData;
@@ -2261,6 +2263,124 @@ async function exportAllData(){
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`工作台备份_${todayStr()}.json`;a.click();
   toast('已导出','success');
+}
+
+/* 导出为 Markdown 文档（人类可读，用于阅读/打印/归档） */
+async function exportAsMarkdown(){
+  const wbName=Config.get('workbenchName')||'工程师工作台';
+  const now=new Date();
+  const dateStr=now.toLocaleString('zh-CN');
+  let md=`# ${wbName}\n\n`;
+  md+=`> 导出时间：${dateStr}\n\n`;
+  // 统计
+  md+=`## 📊 数据概览\n\n`;
+  md+=`| 模块 | 数量 |\n|---|---|\n`;
+  md+=`| 项目 | ${State.projects.length} |\n`;
+  md+=`| 待办任务 | ${State.todos.length} |\n`;
+  md+=`| 知识条目 | ${State.knowledge.length} |\n`;
+  md+=`| 典型电路 | ${State.circuits.length} |\n`;
+  md+=`| Bug记录 | ${State.bugs.length} |\n`;
+  md+=`| SOP文档 | ${State.sops.length} |\n\n`;
+  md+=`---\n\n`;
+
+  // 1. 项目与任务
+  if(State.projects.length>0){
+    md+=`## 📋 项目与任务\n\n`;
+    for(const p of State.projects){
+      md+=`### ${p.archived?'📦':''}${escapeMd(p.name)}\n\n`;
+      if(p.description)md+=`${escapeMd(p.description)}\n\n`;
+      const todos=State.todos.filter(t=>t.projectId===p.id);
+      if(todos.length>0){
+        md+=`| 状态 | 任务 | 备注 |\n|---|---|---|\n`;
+        for(const t of todos){
+          const status=t.done?'✅':'⬜';
+          md+=`| ${status} | ${escapeMd(t.title||'')} | ${escapeMd(t.detail||'')} |\n`;
+        }
+        md+=`\n`;
+      }else{md+=`*(暂无任务)*\n\n`}
+    }
+    md+=`---\n\n`;
+  }
+
+  // 2. 知识库
+  if(State.knowledge.length>0){
+    md+=`## 📚 知识库\n\n`;
+    // 按分类分组
+    const byCat={};
+    State.knowledge.forEach(k=>{const c=k.category||'other';if(!byCat[c])byCat[c]=[];byCat[c].push(k)});
+    for(const catId of Object.keys(byCat)){
+      const cat=CAT_MAP[catId]||CAT_MAP.other;
+      md+=`### ${cat.emoji} ${escapeMd(cat.name)}\n\n`;
+      for(const k of byCat[catId]){
+        const date=k.updatedAt?new Date(k.updatedAt).toLocaleDateString('zh-CN'):'';
+        md+=`#### ${date}\n\n`;
+        if(k.summary)md+=`> **摘要**：${escapeMd(k.summary)}\n\n`;
+        md+=`${escapeMd(k.content||'')}\n\n`;
+        if(k.tags&&k.tags.length>0)md+=`标签：${k.tags.map(t=>'\`'+escapeMd(t)+'\`').join(' ')}\n\n`;
+      }
+    }
+    md+=`---\n\n`;
+  }
+
+  // 3. 典型电路
+  if(State.circuits.length>0){
+    md+=`## 🔌 典型电路\n\n`;
+    const byCat={};
+    State.circuits.forEach(c=>{const cat=c.category||'cother';if(!byCat[cat])byCat[cat]=[];byCat[cat].push(c)});
+    for(const catId of Object.keys(byCat)){
+      const cat=CIRCUIT_CAT_MAP[catId]||CIRCUIT_CAT_MAP.cother;
+      md+=`### ${cat.emoji} ${escapeMd(cat.name)}\n\n`;
+      for(const c of byCat[catId]){
+        const date=c.createdAt?new Date(c.createdAt).toLocaleDateString('zh-CN'):'';
+        md+=`#### ${escapeMd(c.name||'未命名')} （${date}）\n\n`;
+        if(c.description)md+=`${escapeMd(c.description)}\n\n`;
+        if(c.fileType)md+=`文件类型：\`${c.fileType}\`\n\n`;
+      }
+    }
+    md+=`---\n\n`;
+  }
+
+  // 4. Bug 汇总
+  if(State.bugs.length>0){
+    md+=`## 🐛 典型Bug汇总\n\n`;
+    const byCat={};
+    State.bugs.forEach(b=>{const c=b.category||'bother';if(!byCat[c])byCat[c]=[];byCat[c].push(b)});
+    for(const catId of Object.keys(byCat)){
+      const cat=BUG_CAT_MAP[catId]||BUG_CAT_MAP.bother;
+      md+=`### ${cat.emoji} ${escapeMd(cat.name)}\n\n`;
+      for(const b of byCat[catId]){
+        const sev=SEV_MAP[b.severity]||SEV_MAP.normal;
+        const date=b.createdAt?new Date(b.createdAt).toLocaleDateString('zh-CN'):'';
+        md+=`#### ${sev.emoji} [${escapeMd(sev.name)}] ${escapeMd(b.title||'未命名')} （${date}）\n\n`;
+        if(b.summary)md+=`> **摘要**：${escapeMd(b.summary)}\n\n`;
+        md+=`${escapeMd(b.description||'')}\n\n`;
+        if(b.solution)md+=`**解决方案**：${escapeMd(b.solution)}\n\n`;
+      }
+    }
+    md+=`---\n\n`;
+  }
+
+  // 5. SOP
+  if(State.sops.length>0){
+    md+=`## 📄 SOP 工作流程\n\n`;
+    for(const s of State.sops){
+      const date=s.createdAt?new Date(s.createdAt).toLocaleDateString('zh-CN'):'';
+      md+=`### ${escapeMd(s.title||'未命名')} （${date}）\n\n`;
+      md+=`${s.content||''}\n\n`;
+    }
+    md+=`---\n\n`;
+  }
+
+  md+=`\n---\n\n*由 ${wbName} 自动生成 | ${dateStr}*\n`;
+
+  const blob=new Blob([md],{type:'text/markdown;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${wbName}_文档导出_${todayStr()}.md`;a.click();
+  toast('已导出为 Markdown 文档','success');
+}
+
+/* Markdown 转义辅助 */
+function escapeMd(s){
+  return String(s||'').replace(/\|/g,'\\|').replace(/\n/g,'  \n');
 }
 async function importAllData(e){
   const file=e.target.files[0];if(!file)return;
