@@ -1,0 +1,2373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="工程师工作台">
+<meta name="theme-color" content="#86efac">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="assets/icon-192.png">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<link rel="apple-touch-icon" sizes="512x512" href="assets/icon-512.png">
+<title>🔌 工程师工作台</title>
+<!-- 外部CDN库 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+<style>
+/* ============ 全局变量与重置 ============ */
+:root{
+  /* 鲜艳高饱和度配色 - 小红书风格 */
+  --bg:linear-gradient(135deg,#fff5f7 0%,#fef3f2 50%,#f5f3ff 100%);
+  --bg-solid:#fdf2f8;
+  --card:#ffffff; --border:#f1f5f9; --border-strong:#e2e8f0;
+  --text:#0f172a; --text-2:#475569; --text-3:#94a3b8; --text-inv:#fff;
+
+  /* 高饱和度主色 */
+  --primary:#ef4444;         /* 小红书红 */
+  --primary-hover:#dc2626;
+  --primary-soft:#fee2e2;
+  --secondary:#f97316;       /* 橙红 */
+  --pink:#ec4899;            /* 粉红 */
+  --pink-soft:#fce7f3;
+
+  /* 强调色 */
+  --success:#10b981; --success-soft:#d1fae5;
+  --warn:#f59e0b; --warn-soft:#fef3c7;
+  --danger:#ef4444; --danger-soft:#fee2e2;
+  --info:#06b6d4; --info-soft:#cffafe;
+  --purple:#a855f7; --purple-soft:#f3e8ff;
+  --indigo:#6366f1; --indigo-soft:#e0e7ff;
+  --cyan:#06b6d4; --cyan-soft:#cffafe;
+  --yellow:#eab308; --yellow-soft:#fef9c3;
+  --green:#22c55e; --green-soft:#dcfce7;
+
+  /* 渐变 */
+  --grad-primary:linear-gradient(135deg,#ef4444 0%,#f97316 100%);
+  --grad-pink:linear-gradient(135deg,#ec4899 0%,#a855f7 100%);
+  --grad-blue:linear-gradient(135deg,#3b82f6 0%,#a855f7 100%);
+  --grad-success:linear-gradient(135deg,#10b981 0%,#84cc16 100%);
+  --grad-warm:linear-gradient(135deg,#fef3c7 0%,#fce7f3 50%,#ede9fe 100%);
+  --grad-cool:linear-gradient(135deg,#dbeafe 0%,#ede9fe 100%);
+
+  --shadow-sm:0 2px 4px rgba(239,68,68,.06);
+  --shadow:0 4px 12px rgba(239,68,68,.08),0 2px 4px rgba(0,0,0,.04);
+  --shadow-md:0 8px 24px -4px rgba(239,68,68,.12),0 4px 8px -2px rgba(0,0,0,.06);
+  --shadow-lg:0 16px 40px -8px rgba(239,68,68,.18);
+  --radius:8px; --radius-sm:6px; --radius-lg:12px;
+  --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--bg);background-attachment:fixed;color:var(--text);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+a{color:var(--primary);text-decoration:none}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#cbd2d9;border-radius:5px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#9aa5b1}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ============ 通用组件 ============ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;transition:all .18s;border:1px solid transparent;white-space:nowrap;letter-spacing:.2px}
+.btn-primary{background:var(--grad-primary);color:#fff;box-shadow:0 2px 8px rgba(239,68,68,.25)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(239,68,68,.35)}
+.btn-primary:active{transform:translateY(0)}
+.btn-ghost{background:rgba(255,255,255,.7);border-color:var(--border);backdrop-filter:blur(8px)}
+.btn-ghost:hover{background:#fff;border-color:var(--border-strong);box-shadow:var(--shadow)}
+.btn-danger{background:var(--danger);color:#fff;box-shadow:0 2px 8px rgba(239,68,68,.25)}
+.btn-danger:hover{background:#dc2626}
+.btn-purple{background:var(--grad-pink);color:#fff;box-shadow:0 2px 8px rgba(236,72,153,.25)}
+.btn-purple:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(236,72,153,.35)}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:8px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;color:var(--text-2);transition:all .15s}
+.icon-btn:hover{background:var(--primary-soft);color:var(--primary)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;line-height:1.5}
+.input,.textarea,.select{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;transition:all .15s;font-size:13px}
+.input:focus,.textarea:focus,.select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.textarea{resize:vertical;line-height:1.6;font-family:inherit}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
+.tag{display:inline-block;padding:2px 9px;border-radius:6px;font-size:11px;background:var(--primary-soft);color:var(--primary);margin-right:4px;margin-top:2px;font-weight:500}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text-3)}
+.empty-state .emoji{font-size:48px;margin-bottom:12px;opacity:.7}
+.empty-state svg{margin:0 auto 12px;opacity:.4}
+.empty-state h3{font-size:15px;color:var(--text-2);margin-bottom:4px;font-weight:600}
+.empty-state p{font-size:13px}
+.progress-bar{height:8px;background:var(--primary-soft);border-radius:4px;overflow:hidden}
+.progress-bar>div{height:100%;background:var(--grad-primary);transition:width .4s cubic-bezier(.4,0,.2,1);border-radius:4px}
+.toast-wrap{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px}
+.toast{color:#fff;padding:11px 18px;border-radius:12px;box-shadow:var(--shadow-md);font-size:13px;font-weight:500;animation:slideIn .25s;max-width:360px;backdrop-filter:blur(8px)}
+.toast.info{background:rgba(15,23,42,.92)}
+.toast.success{background:var(--grad-success)}
+.toast.error{background:var(--grad-primary)}
+.toast.warn{background:linear-gradient(135deg,#f59e0b 0%,#ea580c 100%)}
+@keyframes slideIn{from{transform:translateX(40px) scale(.95);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+.spinner-dark{border-color:rgba(0,0,0,.15);border-top-color:var(--primary)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.modal-mask{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;animation:fade .15s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{background:#fff;border-radius:18px;box-shadow:var(--shadow-md);width:100%;max-width:520px;max-height:90vh;overflow:auto;border:1px solid var(--border)}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:between}
+.modal-body{padding:22px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:#f8fafc;border-radius:0 0 18px 18px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px}
+.field .hint{font-size:11px;color:var(--text-3);margin-top:4px}
+
+/* ============ 应用布局 ============ */
+.app{display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;background:linear-gradient(135deg,#ffffff 0%,#fff5f7 100%);border-bottom:1px solid var(--border);padding:0 16px;height:56px;flex-shrink:0;box-shadow:0 2px 12px rgba(239,68,68,.06);z-index:10;backdrop-filter:blur(10px)}
+.topbar .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;color:var(--text);margin-right:20px;background:linear-gradient(135deg,#ef4444,#a855f7);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.topbar .logo .logo-icon{width:34px;height:34px;background:var(--grad-primary);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 4px 12px rgba(239,68,68,.3);font-size:18px}
+.tabs{display:flex;gap:4px;flex:1}
+.tab{padding:9px 14px;border-radius:10px;font-size:13px;font-weight:600;color:var(--text-2);transition:all .18s;display:flex;align-items:center;gap:6px;background:transparent}
+.tab:hover{background:rgba(239,68,68,.06);color:var(--text)}
+.tab.active{background:var(--grad-primary);color:#fff;box-shadow:0 4px 12px rgba(239,68,68,.25);transform:translateY(-1px)}
+.tab.active svg{color:#fff!important}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+.main{flex:1;display:flex;overflow:hidden;background:transparent}
+.sidebar{width:260px;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.sidebar-head{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sidebar-head h3{font-size:12px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:1px}
+.sidebar-list{flex:1;overflow-y:auto;padding:8px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .15s;font-size:13px;color:var(--text-2);margin-bottom:2px;font-weight:500}
+.sidebar-item:hover{background:rgba(239,68,68,.05);color:var(--text);transform:translateX(2px)}
+.sidebar-item.active{background:var(--grad-pink);color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(236,72,153,.25)}
+.sidebar-item.active .count{background:rgba(255,255,255,.25);color:#fff}
+.sidebar-item .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.5)}
+.sidebar-item .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sidebar-item .count{font-size:11px;color:var(--text-3);background:#f3f4f6;padding:1px 6px;border-radius:10px}
+.sidebar-item.active .count{background:rgba(37,99,235,.15);color:var(--primary)}
+.content{flex:1;overflow-y:auto;padding:24px 28px}
+
+/* ============ 待办模块 ============ */
+.todo-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.todo-toolbar .search{flex:1;min-width:200px;position:relative}
+.todo-toolbar .search input{padding-left:32px}
+.todo-toolbar .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3)}
+.filter-chips{display:flex;gap:6px}
+.chip{padding:5px 13px;border-radius:20px;font-size:12px;background:#fff;border:1.5px solid var(--border);color:var(--text-2);cursor:pointer;transition:all .15s;font-weight:600}
+.chip:hover{border-color:var(--primary);color:var(--primary);transform:translateY(-1px)}
+.chip.active{background:var(--grad-primary);color:#fff;border-color:transparent;box-shadow:0 4px 10px rgba(239,68,68,.25)}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{position:relative;overflow:hidden;background:#fff;border:none;border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);transition:all .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.stat-card .label{font-size:11px;color:var(--text-2);font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.stat-card .value{font-size:28px;font-weight:800;color:var(--text);line-height:1.1;letter-spacing:-.5px}
+.stat-card .sub{font-size:11px;color:var(--text-3);margin-top:4px;font-weight:500}
+.stat-card .value.danger{color:var(--danger)} .stat-card .value.success{color:var(--success)} .stat-card .value.warn{color:var(--warn)} .stat-card .value.primary{color:var(--primary)}
+.stat-card.todo::before{content:'📋';position:absolute;right:-4px;bottom:-10px;font-size:60px;opacity:.08;pointer-events:none}
+.stat-card.done::before{content:'✅';position:absolute;right:-4px;bottom:-10px;font-size:60px;opacity:.15;pointer-events:none}
+.stat-card.overdue::before{content:'🔥';position:absolute;right:-4px;bottom:-10px;font-size:60px;opacity:.2;pointer-events:none}
+.stat-card.total::before{content:'📊';position:absolute;right:-4px;bottom:-10px;font-size:60px;opacity:.1;pointer-events:none}
+.todo-list{display:flex;flex-direction:column;gap:10px}
+.todo-item{background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px 16px;display:flex;align-items:flex-start;gap:12px;transition:all .2s;box-shadow:var(--shadow-sm)}
+.todo-item:hover{border-color:var(--pink);box-shadow:0 8px 20px rgba(236,72,153,.15);transform:translateY(-1px)}
+.todo-item.overdue{border-left:4px solid var(--danger);background:linear-gradient(90deg,var(--danger-soft) 0%,#fff 30%)}
+.todo-item.done{opacity:.7;background:#f9fafb}
+.todo-item.done .todo-title{text-decoration:line-through;color:var(--text-3)}
+.todo-check{width:22px;height:22px;border:2.5px solid var(--border-strong);border-radius:50%;flex-shrink:0;margin-top:1px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.todo-check:hover{border-color:var(--primary);transform:scale(1.1)}
+.todo-item.done .todo-check{background:var(--grad-success);border-color:var(--success);color:#fff;animation:pop .3s}
+@keyframes pop{0%{transform:scale(.7)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.todo-item.in_progress .todo-check{border-color:var(--warn);background:var(--warn-soft)}
+.todo-body{flex:1;min-width:0}
+.todo-title{font-size:14px;font-weight:500;color:var(--text);word-break:break-word}
+.todo-meta{display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;font-size:12px;color:var(--text-3)}
+.todo-meta .proj{display:flex;align-items:center;gap:4px}
+.todo-actions{display:flex;gap:2px;opacity:0;transition:opacity .12s}
+.todo-item:hover .todo-actions{opacity:1}
+.priority-flag{font-size:12px}
+.priority-flag.high{color:var(--danger)} .priority-flag.medium{color:var(--warn)} .priority-flag.low{color:var(--text-3)}
+.due-tag{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:4px;font-size:11px;background:#f3f4f6}
+.due-tag.overdue{background:var(--danger-soft);color:var(--danger)}
+.due-tag.today{background:var(--warn-soft);color:var(--warn)}
+.due-tag.soon{background:var(--info-soft);color:var(--info)}
+.blocked-reason{font-size:12px;color:var(--danger);background:var(--danger-soft);padding:4px 8px;border-radius:4px;margin-top:6px;display:flex;align-items:center;gap:4px}
+
+/* ============ 知识库模块 ============ */
+.knowledge-input{background:linear-gradient(135deg,#fff 0%,#fffbeb 100%);border:1.5px solid var(--yellow);border-radius:16px;padding:14px;margin-bottom:16px;box-shadow:0 4px 16px rgba(234,179,8,.12)}
+.knowledge-input textarea{border:none;box-shadow:none;padding:0;resize:vertical;min-height:60px;background:transparent;font-size:14px}
+.knowledge-input textarea:focus{outline:none;box-shadow:none}
+.knowledge-input-foot{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px dashed var(--border);margin-top:8px;gap:8px}
+.knowledge-cats{display:flex;gap:4px;flex-wrap:wrap}
+.cat-pill{padding:4px 11px;border-radius:14px;font-size:11px;cursor:pointer;border:1.5px solid transparent;color:var(--text-2);background:#fff;transition:all .15s;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.cat-pill:hover{border-color:var(--primary);transform:translateY(-1px)}
+.cat-pill.active{background:var(--grad-primary);color:#fff;border-color:transparent;box-shadow:0 4px 10px rgba(239,68,68,.25)}
+.knowledge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.k-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:15px;box-shadow:var(--shadow-sm);transition:all .2s;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.k-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--grad-primary);opacity:0;transition:opacity .2s}
+.k-card:hover{border-color:var(--pink);box-shadow:0 12px 28px rgba(236,72,153,.15);transform:translateY(-2px)}
+.k-card:hover::before{opacity:1}
+.k-card-content{font-size:13px;color:var(--text);line-height:1.65;word-break:break-word;white-space:pre-wrap;flex:1;max-height:200px;overflow:hidden;position:relative}
+.k-card-content.expanded{max-height:none}
+.k-card-content pre,.k-card-content code{font-family:var(--mono);font-size:12px;background:var(--bg-solid);padding:1px 5px;border-radius:3px}
+.k-card-content pre{padding:8px;overflow-x:auto;margin:6px 0}
+.k-card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.k-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.k-summary-box{background:linear-gradient(135deg,#fef3c7 0%,#fed7aa 100%);border:1px solid #fdba74;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:12px;color:#7c2d12;line-height:1.5}
+.k-summary-box .label{font-weight:700;display:flex;align-items:center;gap:4px;margin-bottom:4px;color:#9a3412}
+
+/* ============ SOP模块 ============ */
+.sop-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;height:calc(100vh - 56px - 48px)}
+.sop-pane{background:#fff;border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow-sm)}
+.sop-pane-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(90deg,#fff 0%,#fff5f7 100%)}
+.sop-pane-head h3{font-size:14px;font-weight:700;color:var(--text)}
+.sop-pane-body{flex:1;overflow:auto;padding:16px}
+.sop-dropzone{border:2px dashed var(--border-strong);border-radius:var(--radius);padding:28px 20px;text-align:center;color:var(--text-3);cursor:pointer;transition:all .15s;margin-bottom:12px}
+.sop-dropzone:hover,.sop-dropzone.dragover{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
+.sop-dropzone svg{margin:0 auto 8px}
+.sop-source textarea{min-height:280px;font-family:var(--mono);font-size:12px;line-height:1.6}
+.sop-output{font-size:13px;line-height:1.7}
+.sop-output h1{font-size:20px;margin:16px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--primary)}
+.sop-output h2{font-size:15px;margin:14px 0 6px;color:var(--primary)}
+.sop-output h3{font-size:14px;margin:10px 0 4px;color:var(--text-2)}
+.sop-output ol,.sop-output ul{padding-left:22px;margin:6px 0}
+.sop-output li{margin:3px 0}
+.sop-output table{border-collapse:collapse;width:100%;margin:8px 0;font-size:12px}
+.sop-output th,.sop-output td{border:1px solid var(--border);padding:6px 8px;text-align:left}
+.sop-output th{background:#f6f8fa;font-weight:600}
+.sop-output code{font-family:var(--mono);font-size:12px;background:#f6f8fa;padding:1px 5px;border-radius:3px}
+.sop-output blockquote{border-left:3px solid var(--warn);background:var(--warn-soft);padding:8px 14px;margin:10px 0;color:#92400e;border-radius:0 8px 8px 0}
+.sop-field-block{margin-bottom:14px}
+.sop-field-block .ftitle{font-size:13px;font-weight:700;color:var(--primary);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.sop-history{padding:10px 12px;background:var(--bg-solid);border-radius:10px;font-size:12px;color:var(--text-2);margin-bottom:10px}
+.sop-history-item{padding:8px 12px;border:1px solid var(--border);border-radius:10px;font-size:12px;cursor:pointer;transition:all .15s;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;background:#fff}
+.sop-history-item:hover{background:var(--primary-soft);border-color:var(--primary);transform:translateX(2px)}
+.sop-history-item:hover{background:#f3f4f6;border-color:var(--border-strong)}
+
+/* ============ 设置模块 ============ */
+.settings-section{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-sm)}
+.settings-section h3{font-size:15px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.settings-section .desc{font-size:12px;color:var(--text-3);margin-bottom:14px}
+.switch{position:relative;display:inline-block;width:38px;height:22px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:#cbd2d9;transition:.2s;border-radius:22px}
+.slider:before{content:"";position:absolute;height:18px;width:18px;left:2px;bottom:2px;background:#fff;transition:.2s;border-radius:50%}
+.switch input:checked+.slider{background:var(--primary)}
+.switch input:checked+.slider:before{transform:translateX(16px)}
+.kw-editor .kw-cat{margin-bottom:10px;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm)}
+.kw-editor .kw-cat-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;font-weight:600}
+.kw-editor .kw-cat-head .dot{width:10px;height:10px;border-radius:50%}
+.kw-editor textarea{font-size:12px;min-height:50px}
+
+/* ============ 典型电路模块 ============ */
+.circuit-thumb{width:100%;height:160px;object-fit:cover;border-radius:10px;background:var(--bg-solid);cursor:pointer;transition:transform .2s}
+.circuit-thumb:hover{transform:scale(1.02)}
+.circuit-file-card{height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%);border:2px dashed var(--info);border-radius:10px;color:var(--info);gap:6px}
+.circuit-file-card .fname{font-size:11px;color:var(--text-2);max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.circuit-input{background:linear-gradient(135deg,#fff 0%,#ecfeff 100%);border:1.5px solid var(--cyan);border-radius:16px;padding:14px;margin-bottom:16px;box-shadow:0 4px 16px rgba(6,182,212,.12)}
+.circuit-dropzone{border:2px dashed var(--cyan);border-radius:var(--radius);padding:20px 16px;text-align:center;color:var(--text-3);cursor:pointer;transition:all .15s;margin-bottom:10px}
+.circuit-dropzone:hover,.circuit-dropzone.dragover{border-color:var(--cyan);background:var(--cyan-soft);color:var(--cyan)}
+
+/* ============ Bug汇总模块 ============ */
+.bug-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px 16px;box-shadow:var(--shadow-sm);transition:all .2s;border-left:4px solid var(--text-3)}
+.bug-card:hover{border-color:var(--pink);box-shadow:0 8px 20px rgba(236,72,153,.15);transform:translateY(-1px)}
+.bug-card.sev-critical{border-left-color:var(--danger)}
+.bug-card.sev-major{border-left-color:var(--secondary)}
+.bug-card.sev-normal{border-left-color:var(--warn)}
+.bug-card.sev-minor{border-left-color:var(--text-3)}
+.bug-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;margin-top:8px}
+.bug-images img{width:100%;height:80px;object-fit:cover;border-radius:6px;cursor:pointer;transition:transform .15s;border:1px solid var(--border)}
+.bug-images img:hover{transform:scale(1.05)}
+.bug-input{background:linear-gradient(135deg,#fff 0%,#fef2f2 100%);border:1.5px solid var(--danger);border-radius:16px;padding:14px;margin-bottom:16px;box-shadow:0 4px 16px rgba(239,68,68,.1)}
+.bug-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.bug-stat{background:#fff;border-radius:12px;padding:10px 12px;box-shadow:var(--shadow-sm);border-left:3px solid}
+.bug-stat .bval{font-size:22px;font-weight:800}
+.bug-stat .blabel{font-size:11px;color:var(--text-3);font-weight:600}
+.bug-sidebar-section{padding:6px 8px}
+.bug-sidebar-section .stitle{font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;padding:6px 8px 4px}
+
+/* ============ 移动端抽屉遮罩 ============ */
+.sidebar-overlay{position:fixed;inset:0;background:rgba(31,41,51,.45);z-index:19;opacity:0;pointer-events:none;transition:opacity .2s}
+.sidebar-overlay.show{opacity:1;pointer-events:auto}
+/* 汉堡按钮（仅移动端显示） */
+.menu-toggle{display:none;width:34px;height:34px;border-radius:var(--radius-sm);align-items:center;justify-content:center;color:var(--text-2);margin-right:6px;-webkit-tap-highlight-color:transparent}
+.menu-toggle:active{background:#f3f4f6}
+/* SOP 移动端切换按钮 */
+.sop-mobile-tabs{display:none;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.sop-mobile-tab{padding:8px;border-radius:var(--radius-sm);background:#fff;border:1px solid var(--border);color:var(--text-2);font-size:13px;font-weight:500;text-align:center;cursor:pointer}
+.sop-mobile-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* ============ 响应式：≤ 768px（手机/小平板） ============ */
+@media (max-width:768px){
+  :root{--radius:8px}
+  body{font-size:14px;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+  /* 顶栏 */
+  .topbar{padding:0 10px;height:50px}
+  .topbar .logo{margin-right:8px}
+  .topbar .logo span{display:none}  /* 隐藏标题文字只留图标 */
+  .topbar .logo .logo-icon{width:30px;height:30px}
+  .menu-toggle{display:inline-flex}
+  .tabs{gap:0}
+  .tab{padding:8px 10px;flex:1;justify-content:center}
+  .tab span{display:none}  /* tab只显示图标 */
+  .tab.active{background:var(--primary-soft)}
+  .topbar-actions .badge{font-size:10px;padding:1px 6px}
+  .topbar-actions .badge span{display:none}  /* LLM徽章只留图标 */
+
+  /* 主体：单栏，侧栏变抽屉 */
+  .main{position:relative}
+  .sidebar{position:fixed;top:50px;left:0;bottom:0;width:240px;z-index:20;transform:translateX(-100%);transition:transform .22s ease;box-shadow:var(--shadow-md)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-head{padding:12px 14px 8px}
+  .sidebar-list{padding:6px}
+  .sidebar-item{padding:10px 12px;font-size:14px}
+  .content{padding:14px 12px;flex:1;width:100%}
+
+  /* 待办：标题区 */
+  .content h2{font-size:16px}
+  .stats-row{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+  .stat-card{padding:10px 12px}
+  .stat-card .value{font-size:20px}
+  .stat-card .label{font-size:10px}
+  .stat-card .sub{font-size:10px}
+  .todo-toolbar{flex-direction:column;align-items:stretch;gap:8px}
+  .todo-toolbar .search{min-width:0}
+  .todo-toolbar .search input{padding-left:30px;height:38px}
+  .filter-chips{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  .filter-chips::-webkit-scrollbar{display:none}
+  .chip{flex-shrink:0;padding:6px 12px;font-size:12px}
+
+  /* 待办项：操作按钮常显（触屏无 hover） */
+  .todo-item{padding:11px 12px;gap:10px}
+  .todo-actions{opacity:1}
+  .todo-actions .icon-btn{width:32px;height:32px}
+  .todo-meta{font-size:11px;gap:6px}
+  .todo-title{font-size:14px}
+
+  /* 知识库 */
+  .knowledge-input{padding:10px}
+  .knowledge-input textarea{min-height:70px;font-size:14px}
+  .knowledge-input-foot{flex-wrap:wrap;gap:6px}
+  .knowledge-grid{grid-template-columns:1fr;gap:10px}
+  .k-card{padding:12px}
+  .k-card-content{font-size:13px;max-height:160px}
+  .k-card .icon-btn{width:32px;height:32px}
+
+  /* 电路/Bug */
+  .circuit-thumb{height:140px}
+  .circuit-file-card{height:140px}
+  .bug-stats-row{grid-template-columns:repeat(2,1fr);gap:8px}
+  .bug-images{grid-template-columns:repeat(auto-fill,minmax(70px,1fr))}
+
+  /* SOP：双栏改单栏 + tab 切换 */
+  .sop-mobile-tabs{display:grid}
+  .sop-layout{grid-template-columns:1fr;height:auto}
+  .sop-pane{display:none}
+  .sop-pane.mobile-active{display:flex}
+  .sop-pane-body{padding:12px}
+  .sop-source textarea{min-height:200px;font-size:13px}
+  .sop-dropzone{padding:20px 14px}
+  .sop-output{font-size:13px}
+  .sop-output h1{font-size:18px}
+  .sop-output h2{font-size:14px}
+
+  /* 模态弹窗适配 */
+  .modal{max-width:calc(100vw - 24px)!important;max-height:88vh}
+  .modal-body{padding:16px}
+  .field label{font-size:13px}
+  .input,.textarea,.select{font-size:15px;height:auto;padding:10px 12px}  /* iOS 避免 <16px 缩放 */
+  .select{height:40px}
+  .btn{padding:10px 16px;font-size:14px;min-height:40px}
+
+  /* 设置 */
+  .settings-section{padding:14px;margin-bottom:12px}
+  .kw-editor .kw-cat{padding:8px}
+
+  /* toast 适配 */
+  .toast-wrap{top:8px;right:8px;left:8px}
+  .toast{max-width:none;font-size:13px}
+}
+
+/* ============ 响应式：≤ 380px（小屏手机） ============ */
+@media (max-width:380px){
+  .stats-row{grid-template-columns:1fr 1fr;gap:6px}
+  .stat-card{padding:8px 10px}
+  .stat-card .value{font-size:18px}
+  .content{padding:12px 10px}
+  .todo-item{padding:10px}
+}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<div class="toast-wrap" id="toastWrap"></div>
+<script>
+/* ========================================================================
+ * 电路工程师工作台 - 主应用
+ * ====================================================================== */
+
+/* ----------------------- 工具函数 ----------------------- */
+const $ = (sel,parent=document)=>parent.querySelector(sel);
+const $$ = (sel,parent=document)=>Array.from(parent.querySelectorAll(sel));
+const uid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const fmtDate = (d)=>{if(!d)return '';const dt=new Date(d);if(isNaN(dt))return '';const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,'0'),da=String(dt.getDate()).padStart(2,'0');return `${y}-${m}-${da}`};
+const fmtDateTime = (d)=>{if(!d)return '';const dt=new Date(d);if(isNaN(dt))return '';return fmtDate(d)+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0')};
+const todayStr = ()=>{const d=new Date();return fmtDate(d)};
+const daysBetween = (dueDate,today)=>{const p=s=>s.split('-').map(Number);const da=new Date(p(dueDate)[0],p(dueDate)[1]-1,p(dueDate)[2]);const db=new Date(p(today)[0],p(today)[1]-1,p(today)[2]);return Math.round((da-db)/86400000)};
+const escapeHtml = (s)=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const escapeAttr = (s)=>escapeHtml(s);
+function toast(msg,type='info',ms=2600){
+  const emojiMap={success:'✅',error:'❌',warn:'⚠️',info:'💡'};
+  const el=document.createElement('div');el.className='toast '+type;el.textContent=(emojiMap[type]||'')+' '+msg;
+  $('#toastWrap').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .2s';setTimeout(()=>el.remove(),200)},ms);
+}
+function confirmBox(msg,opts={}){
+  return new Promise(res=>{
+    const mask=document.createElement('div');mask.className='modal-mask';
+    mask.innerHTML=`<div class="modal" style="max-width:400px"><div class="modal-body" style="text-align:center;padding:24px">
+      <div style="font-size:14px;color:var(--text);margin-bottom:4px;line-height:1.6">${escapeHtml(msg)}</div>
+      ${opts.hint?`<div style="font-size:12px;color:var(--text-3);margin-top:6px">${escapeHtml(opts.hint)}</div>`:''}
+      </div><div class="modal-footer">
+      <button class="btn btn-ghost" data-act="no">${opts.noText||'取消'}</button>
+      <button class="btn ${opts.danger?'btn-danger':'btn-primary'}" data-act="yes">${opts.yesText||'确定'}</button>
+      </div></div>`;
+    document.body.appendChild(mask);
+    mask.addEventListener('click',e=>{
+      if(e.target===mask||e.target.dataset.act==='no'){mask.remove();res(false)}
+      else if(e.target.dataset.act==='yes'){mask.remove();res(true)}
+    });
+  });
+}
+function promptBox(title,opts={}){
+  return new Promise(res=>{
+    const mask=document.createElement('div');mask.className='modal-mask';
+    mask.innerHTML=`<div class="modal" style="max-width:440px">
+      <div class="modal-header"><h3 style="font-size:15px">${escapeHtml(title)}</h3></div>
+      <div class="modal-body">
+        ${opts.fields?opts.fields.map(f=>`<div class="field"><label>${escapeHtml(f.label)}</label>${
+          f.type==='select'?
+            `<select class="select" id="pf_${f.id}">${(f.options||[]).map(o=>`<option value="${escapeAttr(o.value||o.id||o)}" ${(f.value===(o.value||o.id||o))?'selected':''}>${escapeHtml(o.label||o.name||o)}</option>`).join('')}</select>`
+          :f.type==='textarea'?
+            `<textarea class="textarea" id="pf_${f.id}" rows="${f.rows||3}">${escapeHtml(f.value||'')}</textarea>`
+          :f.type==='checkbox'?
+            `<label class="switch"><input type="checkbox" id="pf_${f.id}" ${f.value?'checked':''}><span class="slider"></span></label>`
+          :
+            `<input class="input" id="pf_${f.id}" type="${f.type||'text'}" value="${escapeAttr(f.value||'')}" ${f.placeholder?`placeholder="${escapeAttr(f.placeholder)}"`:''}/>`
+        }${f.hint?`<div class="hint">${escapeHtml(f.hint)}</div>`:''}</div>`).join(''):''}
+      </div><div class="modal-footer">
+      <button class="btn btn-ghost" data-act="no">取消</button>
+      <button class="btn btn-primary" data-act="yes">确定</button></div></div>`;
+    document.body.appendChild(mask);
+    const firstInput=mask.querySelector('input,textarea');if(firstInput)firstInput.focus();
+    mask.addEventListener('click',e=>{
+      if(e.target===mask||e.target.dataset.act==='no'){mask.remove();res(null)}
+      else if(e.target.dataset.act==='yes'){
+        const result={};
+        (opts.fields||[]).forEach(f=>result[f.id]=$(('#pf_'+f.id),mask).value);
+        mask.remove();res(result);
+      }
+    });
+  });
+}
+const svg = (path,size=16)=>`<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+const ICONS={
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  logo:'<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>',
+  list:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  trash:'<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  edit:'<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+  search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  play:'<polygon points="5 3 19 12 5 21 5 3"/>',
+  pause:'<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>',
+  alert:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  tag:'<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>',
+  flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>',
+  sparkles:'<path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/>',
+  folder:'<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+  today:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="15" r="2" fill="currentColor"/>',
+  menu:'<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
+  save:'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
+  refresh:'<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+  zap:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  chevron:'<polyline points="9 18 15 12 9 6"/>',
+};
+
+/* ----------------------- 数据层 (IndexedDB) ----------------------- */
+const DB={
+  db:null,
+  async init(){
+    return new Promise((resolve,reject)=>{
+      const req=indexedDB.open('circuit_workbench',2);
+      req.onupgradeneeded=e=>{
+        const db=e.target.result;
+        if(!db.objectStoreNames.contains('projects'))db.createObjectStore('projects',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('todos'))db.createObjectStore('todos',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('knowledge'))db.createObjectStore('knowledge',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('sops'))db.createObjectStore('sops',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('circuits'))db.createObjectStore('circuits',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('bugs'))db.createObjectStore('bugs',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('meta'))db.createObjectStore('meta',{keyPath:'key'});
+      };
+      req.onsuccess=e=>{DB.db=e.target.result;resolve()};
+      req.onerror=e=>reject(e.target.error);
+    });
+  },
+  _tx(store,mode='readonly'){return DB.db.transaction(store,mode).objectStore(store)},
+  async get(store,id){return new Promise((res,rej)=>{const r=DB._tx(store).get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
+  async all(store){return new Promise((res,rej)=>{const r=DB._tx(store).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error)})},
+  async put(store,obj){return new Promise((res,rej)=>{const r=DB._tx(store,'readwrite').put(obj);r.onsuccess=()=>res(obj);r.onerror=()=>rej(r.error)})},
+  async del(store,id){return new Promise((res,rej)=>{const r=DB._tx(store,'readwrite').delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})},
+  async clear(store){return new Promise((res,rej)=>{const r=DB._tx(store,'readwrite').clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})},
+  async getMeta(key){const r=await DB.get('meta',key);return r?r.value:null},
+  async setMeta(key,value){return DB.put('meta',{key,value})},
+};
+
+/* ----------------------- 应用版本（每次更新递增） ----------------------- */
+const CACHE_VERSION='2.2.0';
+
+/* ----------------------- 动态 Manifest（让安装后的应用名可自定义） ----------------------- */
+let _manifestBlobUrl=null;
+function applyDynamicManifest(){
+  const name=Config.get('workbenchName')||'工程师工作台';
+  const manifest={
+    name:name,
+    short_name:name.length>8?name.slice(0,8):name,
+    description:'服务器硬件电路工程师的个人工作台',
+    start_url:'./index_pwa.html',
+    scope:'./',
+    display:'standalone',
+    orientation:'portrait',
+    background_color:'#d4f5e9',
+    theme_color:'#86efac',
+    lang:'zh-CN',
+    icons:[
+      {src:'assets/icon-192.png',sizes:'192x192',type:'image/png',purpose:'any maskable'},
+      {src:'assets/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'},
+      {src:'assets/icon-180.png',sizes:'180x180',type:'image/png',purpose:'any'}
+    ]
+  };
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
+  if(_manifestBlobUrl)URL.revokeObjectURL(_manifestBlobUrl);
+  _manifestBlobUrl=URL.createObjectURL(blob);
+  let link=document.querySelector('link[rel="manifest"]');
+  if(!link){link=document.createElement('link');link.rel='manifest';document.head.appendChild(link);}
+  link.href=_manifestBlobUrl;
+  // 同步 apple-mobile-web-app-title（iOS 桌面图标名）
+  let meta=document.querySelector('meta[name="apple-mobile-web-app-title"]');
+  if(meta)meta.content=name;
+}
+
+/* ----------------------- 配置 (LLM等) ----------------------- */
+const Config={
+  defaults:{llmEnabled:false,baseUrl:'',apiKey:'',model:'gpt-4o-mini',llmPrompt:'',workbenchName:'工程师工作台'},
+  data:null,
+  async load(){
+    const stored=await DB.getMeta('config');
+    Config.data=Object.assign({},Config.defaults,stored||{});
+    return Config.data;
+  },
+  async save(){return DB.setMeta('config',Config.data)},
+  get(k){return Config.data[k]},
+  set(k,v){Config.data[k]=v;return Config.save()},
+};
+
+/* ----------------------- LLM 调用层 ----------------------- */
+const LLM={
+  isAvailable(){return Config.get('llmEnabled')&&Config.get('baseUrl')&&Config.get('apiKey')},
+  /* 智能拼接 chat/completions 完整端点 */
+  buildUrl(baseUrl){
+    let u=baseUrl.replace(/\/+$/,''); // 去尾部斜杠
+    if(u.includes('/chat/completions'))return u; // 已是完整路径
+    if(/\/v\d+\/?$/.test(u))return u.replace(/\/+$/,'')+'/chat/completions'; // 已含 /v1 结尾
+    if(u.includes('/v1/')||u.includes('/v2/'))return u+'/chat/completions'; // 路径中间已含版本号
+    return u+'/v1/chat/completions'; // 默认追加
+  },
+  async chat(messages,opts={}){
+    if(!LLM.isAvailable())throw new Error('LLM未启用或未配置');
+    const url=LLM.buildUrl(Config.get('baseUrl'));
+    const body={model:Config.get('model'),messages,temperature:opts.temperature??0.3,stream:false};
+    if(opts.maxTokens)body.max_tokens=opts.maxTokens;
+    let resp;
+    try{
+      resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+Config.get('apiKey')},body:JSON.stringify(body)});
+    }catch(netErr){
+      throw new Error('网络请求失败（可能是CORS跨域拦截或网络不通）：'+netErr.message);
+    }
+    if(!resp.ok){const t=await resp.text().catch(()=>resp.statusText);throw new Error(`LLM请求失败 (${resp.status}): ${t.slice(0,200)}`)}
+    const data=await resp.json();
+    return data.choices?.[0]?.message?.content||'';
+  },
+};
+
+/* ----------------------- 知识分类引擎 ----------------------- */
+/* 内置知识分类（基础，不可删除；关键词可编辑） */
+const BUILTIN_CATEGORIES=[
+  {id:'power',name:'电源系统',emoji:'⚡',color:'#ef4444',keywords:['psu','vr','vrm','pwr','power','电源','供电','纹波','ripple','负载瞬态','load transient','时序','power sequence','上电时序','掉电','电压','电流','功耗','mosfet','dc-dc','ldo','稳压','polyphase','耦合电感'],builtin:true},
+  {id:'si',name:'信号完整性',emoji:'📡',color:'#3b82f6',keywords:['si','signal integrity','信号完整性','眼图','eye','eye diagram','eye mask','眼图模板','tdr','阻抗','impedance','阻抗线','阻抗匹配','差分阻抗','串扰','crosstalk','等长','length match','length matching','差分','differential','差分对','反射','reflection','损耗','insertion loss','return loss','预加重','pre-emphasis','均衡','equalization','de-emphasis','信号质量','端接','termination','t-line','传输线','波形','波形完整性','波形质量','波形测试','s参数','s-parameter','回波损耗','抖动','jitter','码间干扰','isi','过冲','undershoot','振铃','ringing','channel','通道','信道','32gt','16gt','pcie gen5','pcie gen4','gt/s','rx端接','tx预加重','serdes'],builtin:true},
+  {id:'timing',name:'时序与时钟',emoji:'⏱️',color:'#a855f7',keywords:['clock','时钟','jitter','抖动','pll','phase locked','时序收敛','timing closure','setup','hold','建立时间','保持时间','时序分析','频率','frequency','晶振','crystal','oscillator','倍频','分频','cdc','跨时钟域','skew','时钟树'],builtin:true},
+  {id:'pcb',name:'PCB设计',emoji:'🔧',color:'#0891b2',keywords:['pcb','叠层','stackup','布线','routing','走线','过孔','via','dfm','可制造','阻抗线','impedance control','铺铜','copper pour','地平面','gnd plane','电源平面','丝印','solder mask','阻焊','钢网','gerber','cam','盲埋孔','hdmi','hdmi线','微孔','封装'],builtin:true},
+  {id:'thermal',name:'热设计',emoji:'🌡️',color:'#f97316',keywords:['thermal','热设计','散热','heat sink','散热片','风道','airflow','温度','temperature','结温','junction temp','功耗','tdp','导热硅脂','thermal paste','导热垫','thermal pad','热阻','thermal resistance','风扇','fan','液冷','thermistor','温度传感器'],builtin:true},
+  {id:'interface',name:'接口协议',emoji:'🔌',color:'#10b981',keywords:['协议','协议栈','协议栈分析','协议层','握手','协商','热插拔','hot plug','plug','即插即用','枚举','enumeration','描述符','descriptor','pcie配置空间','tlp','dllp','ack/nak','usb协议','usb枚举','usb描述符','hid','cdc','msd','dfu','midi','uvc','uac','uart协议','i2c协议','spi协议','mdio协议','jtag协议','ipmi协议','redfish协议','smbus协议','sgmii协议','快充协议','pd协议','pd协商','qc协议','pps','phy','mac层','phy层','链路层','链路训练','链路训练状态机','lt_state','recovery','ltssm','channel bonding','port bifurcation','multi-host','rc','ep','root complex','endpoint'],builtin:true},
+  {id:'test',name:'测试与调试',emoji:'🔍',color:'#eab308',keywords:['示波器','oscilloscope','万用表','multimeter','万用表','bga','焊接','飞线','flying wire','测量','measurement','探棒','probe','调试','debug','逻辑分析仪','logic analyzer','烧录','编程器','programmer','ict','fct','边界扫描','boundary scan','jtag调试','万用表','电流钳','差分探头'],builtin:true},
+  {id:'component',name:'器件选型',emoji:'💾',color:'#8b5cf6',keywords:['电容','capacitor','电阻','resistor','电感','inductor','mosfet','场效应管','二极管','diode','ic','芯片','选型','derating','降额','esr','等效电阻','mlcc','钽电容','铝电解','固态电容','磁珠','bead','tvss','压敏','型号','datasheet','规格书','替代料','pin to pin'],builtin:true},
+  {id:'emc',name:'EMC/EMI',emoji:'🛡️',color:'#ec4899',keywords:['emc','emi','emc','emi','辐射','radiated','传导','conducted','接地','grounding','屏蔽','shielding','滤波','filter','共模','common mode','差模','差模噪声','esd','静电','surge','浪涌','fast burst','群脉冲','emi滤波器','磁环','ferrite','接地电阻'],builtin:true},
+  {id:'other',name:'其他',emoji:'📦',color:'#64748b',keywords:[],builtin:true},
+];
+let CATEGORIES=BUILTIN_CATEGORIES.map(c=>Object.assign({},c));
+let CAT_MAP={};CATEGORIES.forEach(c=>CAT_MAP[c.id]=c);
+
+/* 自定义分类持久化 */
+const CategoryStore={
+  async load(){
+    const stored=await DB.getMeta('customCategories');
+    const custom=Array.isArray(stored)?stored:[];
+    CATEGORIES=BUILTIN_CATEGORIES.map(c=>Object.assign({},c)).concat(custom.map(c=>Object.assign({builtin:false},c)));
+    CAT_MAP={};CATEGORIES.forEach(c=>CAT_MAP[c.id]=c);
+    return CATEGORIES;
+  },
+  async save(custom){return DB.setMeta('customCategories',custom||[])},
+  getCustom(){return CATEGORIES.filter(c=>!c.builtin).map(c=>Object.assign({},c))},
+  async add(cat){
+    const custom=CategoryStore.getCustom();
+    const obj=Object.assign({id:uid(),builtin:false,createdAt:Date.now()},cat);
+    custom.push(obj);
+    await CategoryStore.save(custom);
+    await CategoryStore.load();
+    return obj;
+  },
+  async update(id,patch){
+    // 内置分类只允许更新 keywords/name/emoji/color（通过 customCategories 覆盖）
+    const builtin=BUILTIN_CATEGORIES.find(c=>c.id===id);
+    if(builtin){
+      // 存为内置覆盖项
+      const overrides=(await DB.getMeta('builtinCategoryOverrides'))||{};
+      overrides[id]=Object.assign(overrides[id]||{},patch);
+      await DB.setMeta('builtinCategoryOverrides',overrides);
+    }else{
+      const custom=CategoryStore.getCustom();
+      const i=custom.findIndex(c=>c.id===id);
+      if(i>=0){custom[i]=Object.assign(custom[i],patch);await CategoryStore.save(custom)}
+    }
+    await CategoryStore.reloadWithOverrides();
+  },
+  async reloadWithOverrides(){
+    await CategoryStore.load();
+    const overrides=(await DB.getMeta('builtinCategoryOverrides'))||{};
+    CATEGORIES.forEach(c=>{if(overrides[c.id]){Object.assign(c,overrides[c.id]);CAT_MAP[c.id]=c}});
+  },
+  async remove(id){
+    const custom=CategoryStore.getCustom().filter(c=>c.id!==id);
+    await CategoryStore.save(custom);
+    await CategoryStore.load();
+    // 该分类下的知识归到 other
+    let changed=false;
+    for(const k of State.knowledge){if(k.category===id){k.category='other';k.updatedAt=Date.now();await DB.put('knowledge',k);changed=true}}
+    return changed;
+  },
+};
+function classifyKnowledge(text){
+  if(!text||!text.trim())return {cat:'other',score:0,uncertain:true};
+  const lower=text.toLowerCase();
+  const scores={};
+  CATEGORIES.forEach(c=>{
+    if(c.id==='other')return;
+    let s=0;
+    c.keywords.forEach(kw=>{s+=matchKeyword(lower,kw)});
+    scores[c.id]=s;
+  });
+  let best='other',bestScore=0;
+  Object.entries(scores).forEach(([k,v])=>{if(v>bestScore){bestScore=v;best=k}});
+  const sorted=Object.entries(scores).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const uncertain=bestScore===0||(sorted.length>=2&&(sorted[0][1]-sorted[1][1])<=1);
+  return {cat:best,score:bestScore,uncertain,top:sorted.slice(0,3)};
+}
+
+/* ----------------------- 典型电路分类 ----------------------- */
+const CIRCUIT_CATEGORIES=[
+  {id:'pwr',name:'电源电路',emoji:'⚡',color:'#ef4444',keywords:['电源','供电','vrm','vr','psu','dc-dc','ldo','稳压','buck','boost','ldo','pmic','pwr','power','12v','3.3v','1.8v','5v','svrail',' polyphase','耦合电感']},
+  {id:'clk',name:'时钟电路',emoji:'⏱️',color:'#a855f7',keywords:['clock','时钟','晶振','crystal','oscillator','pll','差分时钟','clk','晶体系列','buffer','时钟分发','skew','jitter','抖动','倍频','分频','100m','200m','25m']},
+  {id:'if',name:'接口电路',emoji:'🔌',color:'#10b981',keywords:['接口','pcie','usb','sata','ethernet','sgmii','i2c','spi','uart','mdio','jtag','rgmii','接口','phy','mac','连接器','connector','hdmi','dp','type-c','rj45']},
+  {id:'amp',name:'放大电路',emoji:'📶',color:'#3b82f6',keywords:['放大','amplifier','opamp','运放','opa','增益','gain','差分放大','仪表放大','电流检测','电流采样','sense','shunt','比较器','comparator']},
+  {id:'logic',name:'逻辑电路',emoji:'🧮',color:'#6366f1',keywords:['逻辑','fpga','cpld','mcu','cpu','逻辑门','与门','或门','非门','触发器','flip','flop','译码','decode','编码','encode','fsm','状态机','verilog']},
+  {id:'protect',name:'保护电路',emoji:'🛡️',color:'#ec4899',keywords:['保护','tvss','tvss管','esd','静电','surge','浪涌','过压','overvoltage','过流','overcurrent','保险丝','fuse','压敏','mov','保护二极管','钳位','clamp','热插拔','hotswap']},
+  {id:'filter',name:'滤波电路',emoji:'🌊',color:'#06b6d4',keywords:['滤波','filter','rc','lc','低通','高通','带通','π型','t型','滤波器','rc滤波','lc滤波','emc滤波','共模电感','磁珠','bead','去耦','decoupling']},
+  {id:'drive',name:'驱动电路',emoji:'🔌',color:'#f97316',keywords:['驱动','driver','mos驱动','gate driver','igbt','mosfet驱动','继电器','relay','电机驱动','led驱动','缓冲','snubber','图腾','totem','推挽','push-pull']},
+  {id:'seq',name:'时序电路',emoji:'⏰',color:'#eab308',keywords:['时序','sequence','上电时序','power sequence','reset','复位','watchdog','看门狗','延时','delay','enable','pgood','power good','时序控制','sequencer']},
+  {id:'cother',name:'其他',emoji:'📦',color:'#64748b',keywords:[]},
+];
+const CIRCUIT_CAT_MAP={};CIRCUIT_CATEGORIES.forEach(c=>CIRCUIT_CAT_MAP[c.id]=c);
+function classifyCircuit(text){
+  if(!text||!text.trim())return {cat:'cother',score:0,uncertain:true};
+  const lower=text.toLowerCase();
+  const scores={};
+  CIRCUIT_CATEGORIES.forEach(c=>{
+    if(c.id==='cother')return;
+    let s=0;
+    c.keywords.forEach(kw=>{s+=matchKeyword(lower,kw)});
+    scores[c.id]=s;
+  });
+  let best='cother',bestScore=0;
+  Object.entries(scores).forEach(([k,v])=>{if(v>bestScore){bestScore=v;best=k}});
+  const sorted=Object.entries(scores).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const uncertain=bestScore===0||(sorted.length>=2&&(sorted[0][1]-sorted[1][1])<=1);
+  return {cat:best,score:bestScore,uncertain,top:sorted.slice(0,3)};
+}
+
+/* ----------------------- Bug 分类 ----------------------- */
+const BUG_CATEGORIES=[
+  {id:'bsi',name:'信号完整性',emoji:'📡',color:'#3b82f6',keywords:['si','signal integrity','信号完整性','眼图','阻抗','串扰','crosstalk','反射','抖动','jitter','眼图模板','码间干扰','isi','过冲','振铃','ringing','波形','s参数','预加重','均衡','端接','差分','等长','length match']},
+  {id:'bpwr',name:'电源问题',emoji:'⚡',color:'#ef4444',keywords:['电源','供电','vrm','vr','纹波','ripple','负载瞬态','电压','掉电','掉电','mosfet','dc-dc','ldo','稳压','polyphase','esr','电容','pmic','过压','过流','短路','12v','3.3v','1.8v','svrail']},
+  {id:'bclk',name:'时序问题',emoji:'⏱️',color:'#a855f7',keywords:['时序','clock','时钟','jitter','抖动','pll','setup','hold','建立时间','保持时间','时序收敛','skew','时钟树','跨时钟域','cdc','晶振']},
+  {id:'bsolder',name:'焊接工艺',emoji:'🔥',color:'#f97316',keywords:['焊接','solder','虚焊','连锡','桥接','冷焊','bga','返板','飞线','flying wire','rework','返修','锡膏','钢网','回流焊','reflow','波峰焊','冷焊','空焊']},
+  {id:'bcomp',name:'器件失效',emoji:'💾',color:'#8b5cf6',keywords:['器件','失效','损坏','烧毁','击穿','电容','电阻','mosfet','二极管','ic','芯片','esd','静电','烧坏','失效分析','fa','derating','降额','mlcc','钽电容','固容','断路','开路']},
+  {id:'bemc',name:'EMC问题',emoji:'🛡️',color:'#ec4899',keywords:['emc','emi','辐射','传导','接地','屏蔽','滤波','共模','差模','esd','静电','surge','浪涌','群脉冲','eft','emi滤波器','磁环','ferrite','re','ce']},
+  {id:'bsw',name:'软件固件',emoji:'💻',color:'#0891b2',keywords:['软件','固件','firmware','bios','bmc','驱动','driver','寄存器','register','配置','configuration','代码','code','死机','死锁','重启','reboot','panic','崩溃','flash','烧录','版本']},
+  {id:'bmech',name:'结构装配',emoji:'🔧',color:'#64748b',keywords:['结构','装配','机械','connector','连接器','插座','socket','卡扣','螺丝','应力','碰撞','干涉','尺寸','公差','装配','插拔','拔插','导轨','机箱']},
+  {id:'bthermal',name:'热设计',emoji:'🌡️',color:'#ea580c',keywords:['热','thermal','散热','温度','结温','过热','overheat','风扇','fan','散热片','heat sink','风道','thermal throttling','降频','导热','硅脂','热阻']},
+  {id:'bother',name:'其他',emoji:'🐛',color:'#64748b',keywords:[]},
+];
+const BUG_CAT_MAP={};BUG_CATEGORIES.forEach(c=>BUG_CAT_MAP[c.id]=c);
+const SEVERITIES=[
+  {id:'critical',name:'致命',emoji:'🔴',color:'#ef4444',keywords:['致命','critical','crash','崩溃','烧毁','起火','爆炸','烧坏','死机','无法启动','不开机','完全失效','bricked','断电','黑屏']},
+  {id:'major',name:'严重',emoji:'🟠',color:'#f97316',keywords:['严重','major','失效','功能失效','不能工作','不稳定','频繁','重启','reboot','数据丢失','性能严重下降','死锁']},
+  {id:'normal',name:'一般',emoji:'🟡',color:'#eab308',keywords:['一般','normal','偶发','异常','warning','告警','性能下降','不稳定','间歇','偶尔']},
+  {id:'minor',name:'轻微',emoji:'⚪',color:'#94a3b8',keywords:['轻微','minor','cosmetic','外观','提示','log','日志','小问题','不影响功能']},
+];
+const SEV_MAP={};SEVERITIES.forEach(s=>SEV_MAP[s.id]=s);
+/* 关键词匹配（中英文友好）：纯ASCII短词用单词边界，其余用子串计数 */
+function matchKeyword(lower,kw){
+  const kwl=kw.toLowerCase();
+  if(kwl.length<=2&&/^[a-z0-9]+$/.test(kwl)){
+    return new RegExp('(?<![a-z0-9])'+kwl.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?![a-z0-9])').test(lower)?2:0;
+  }
+  const cnt=lower.split(kwl).length-1;
+  return cnt>0?cnt*2:0;
+}
+function classifyBug(text){
+  if(!text||!text.trim())return {cat:'bother',severity:'normal',uncertain:true};
+  const lower=text.toLowerCase();
+  // 类型
+  const scores={};
+  BUG_CATEGORIES.forEach(c=>{
+    if(c.id==='bother')return;
+    let s=0;
+    c.keywords.forEach(kw=>{s+=matchKeyword(lower,kw)});
+    scores[c.id]=s;
+  });
+  let best='bother',bestScore=0;
+  Object.entries(scores).forEach(([k,v])=>{if(v>bestScore){bestScore=v;best=k}});
+  // 严重程度
+  let sev='normal',sevScore=0;
+  SEVERITIES.forEach(s=>{
+    if(s.id==='normal')return;
+    let s2=0;
+    s.keywords.forEach(kw=>{s2+=matchKeyword(lower,kw)});
+    if(s2>sevScore){sevScore=s2;sev=s.id}
+  });
+  const sorted=Object.entries(scores).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const uncertain=bestScore===0||(sorted.length>=2&&(sorted[0][1]-sorted[1][1])<=1);
+  return {cat:best,severity:sev,uncertain};
+}
+
+/* ----------------------- 应用状态 ----------------------- */
+const State={
+  currentModule:'todo',
+  // todo
+  projects:[],todos:[],currentProjectId:null,todoFilter:'all',todoSearch:'',
+  // knowledge
+  knowledge:[],kwCategoryFilter:'all',kwSearch:'',
+  // sop
+  sops:[],sopSourceText:'',currentSopId:null,
+  // circuit
+  circuits:[],circuitCategoryFilter:'all',circuitSearch:'',
+  // bug
+  bugs:[],bugCategoryFilter:'all',bugSeverityFilter:'all',bugSearch:'',
+};
+
+/* ----------------------- 路由 ----------------------- */
+function switchModule(mod){
+  State.currentModule=mod;
+  renderTopbar();
+  renderMain();
+}
+
+/* ----------------------- 顶部导航 ----------------------- */
+function renderTopbar(){
+  const app=$('#app');
+  const tabs=[
+    {id:'todo',label:'待办清单',emoji:'📋',icon:ICONS.list},
+    {id:'knowledge',label:'知识库',emoji:'📚',icon:ICONS.book},
+    {id:'circuit',label:'典型电路',emoji:'🔌',icon:ICONS.folder},
+    {id:'bug',label:'Bug汇总',emoji:'🐛',icon:ICONS.alert},
+    {id:'sop',label:'SOP整理',emoji:'📄',icon:ICONS.file},
+    {id:'settings',label:'设置',emoji:'⚙️',icon:ICONS.settings},
+  ];
+  const topbar=document.createElement('div');topbar.className='topbar';
+  topbar.innerHTML=`
+    <button class="menu-toggle" id="menuToggle" aria-label="菜单">${svg(ICONS.menu,20)}</button>
+    <div class="logo">
+      <div class="logo-icon">🔌</div>
+      <span>${escapeHtml(Config.get('workbenchName')||'工程师工作台')}</span>
+    </div>
+    <div class="tabs">
+      ${tabs.map(t=>`<button class="tab ${State.currentModule===t.id?'active':''}" data-mod="${t.id}">${svg(t.icon,15)}<span>${t.emoji} ${t.label}</span></button>`).join('')}
+    </div>
+    <div class="topbar-actions">
+      ${LLM.isAvailable()?`<span class="badge" style="background:var(--success-soft);color:var(--success)">${svg(ICONS.zap,11)} <span>LLM已启用</span></span>`:''}
+    </div>`;
+  topbar.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{switchModule(t.dataset.mod);closeSidebar()});
+  const mt=topbar.querySelector('#menuToggle');
+  if(mt)mt.onclick=toggleSidebar;
+  app.innerHTML='';
+  app.appendChild(topbar);
+  // 抽屉遮罩（仅一个）
+  let overlay=app.querySelector('.sidebar-overlay');
+  if(!overlay){overlay=document.createElement('div');overlay.className='sidebar-overlay';overlay.onclick=closeSidebar;app.appendChild(overlay)}
+  const main=document.createElement('div');main.className='main';main.id='main';
+  app.appendChild(main);
+}
+function toggleSidebar(){
+  const sb=document.querySelector('.sidebar');const ov=document.querySelector('.sidebar-overlay');
+  if(!sb)return;
+  const open=sb.classList.toggle('open');
+  if(ov)ov.classList.toggle('show',open);
+}
+function closeSidebar(){
+  const sb=document.querySelector('.sidebar');const ov=document.querySelector('.sidebar-overlay');
+  if(sb)sb.classList.remove('open');
+  if(ov)ov.classList.remove('show');
+}
+
+/* ----------------------- 主区域分发 ----------------------- */
+function renderMain(){
+  const main=$('#main');if(!main)return;
+  main.innerHTML='';
+  if(State.currentModule==='todo')renderTodo(main);
+  else if(State.currentModule==='knowledge')renderKnowledge(main);
+  else if(State.currentModule==='circuit')renderCircuit(main);
+  else if(State.currentModule==='bug')renderBug(main);
+  else if(State.currentModule==='sop')renderSop(main);
+  else if(State.currentModule==='settings')renderSettings(main);
+}
+
+/* ========================================================================
+ * 模块 A：项目化待办清单
+ * ====================================================================== */
+const PROJECT_COLORS=['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#be185d','#9333ea','#ea580c','#474747'];
+
+async function renderTodo(main){
+  // 侧栏：项目列表 + 今日视图
+  const sidebar=document.createElement('div');sidebar.className='sidebar';
+  sidebar.innerHTML=`
+    <div class="sidebar-head">
+      <h3>🎯 我的项目</h3>
+      <button class="icon-btn" id="newProjectBtn" title="新建项目">➕</button>
+    </div>
+    <div class="sidebar-list">
+      <div class="sidebar-item ${State.currentProjectId==='today'?'active':''}" data-pid="today">
+        <span class="dot" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"></span>
+        <span class="name">📅 今日视图</span>
+      </div>
+      <div class="sidebar-item ${State.currentProjectId==='all'?'active':''}" data-pid="all">
+        <span class="dot" style="background:linear-gradient(135deg,#3b82f6,#a855f7)"></span>
+        <span class="name">📋 全部任务</span>
+        <span class="count">${State.todos.filter(t=>t.status!=='done').length}</span>
+      </div>
+      ${State.projects.map(p=>{
+        const cnt=State.todos.filter(t=>t.projectId===p.id&&t.status!=='done').length;
+        return `<div class="sidebar-item ${State.currentProjectId===p.id?'active':''}" data-pid="${p.id}">
+          <span class="dot" style="background:${p.color}"></span>
+          <span class="name">${escapeHtml(p.name)}</span>
+          <span class="count">${cnt}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  main.appendChild(sidebar);
+
+  // 内容区
+  const content=document.createElement('div');content.className='content';
+  const pid=State.currentProjectId||'today';
+  let displayTodos=[];
+  let title='今日视图',titleIcon=ICONS.today,titleEmoji='📅';
+
+  if(pid==='today'){
+    title='今日视图';titleIcon=ICONS.today;titleEmoji='📅';
+    const tstr=todayStr();
+    displayTodos=State.todos.filter(t=>t.status!=='done'&&(t.dueDate===tstr||t.status==='in_progress'));
+  }else if(pid==='all'){
+    title='全部任务';titleIcon=ICONS.list;titleEmoji='📋';
+    displayTodos=State.todos.filter(t=>t.status!=='done');
+  }else{
+    const proj=State.projects.find(p=>p.id===pid);
+    title=proj?proj.name:'项目';titleIcon=ICONS.folder;titleEmoji='🎯';
+    displayTodos=State.todos.filter(t=>t.projectId===pid);
+  }
+
+  // 筛选
+  if(State.todoFilter!=='all')displayTodos=displayTodos.filter(t=>t.status===State.todoFilter);
+  if(State.todoSearch){
+    const q=State.todoSearch.toLowerCase();
+    displayTodos=displayTodos.filter(t=>(t.title||'').toLowerCase().includes(q)||(t.detail||'').toLowerCase().includes(q));
+  }
+  // 排序：优先级 高>中>低，期限近的靠前
+  const prioOrder={high:0,medium:1,low:2};
+  displayTodos.sort((a,b)=>{
+    if(a.status!==b.status){const so={in_progress:0,pending:1,blocked:2,done:3};return so[a.status]-so[b.status]}
+    if(prioOrder[a.priority]!==prioOrder[b.priority])return prioOrder[a.priority]-prioOrder[b.priority];
+    if(a.dueDate&&b.dueDate)return a.dueDate.localeCompare(b.dueDate);
+    if(a.dueDate)return-1;if(b.dueDate)return 1;
+    return 0;
+  });
+
+  // 统计
+  const allForStat=pid==='today'?State.todos.filter(t=>t.status!=='done'&&(t.dueDate===todayStr()||t.status==='in_progress')):(pid==='all'?State.todos:State.todos.filter(t=>t.projectId===pid));
+  const total=allForStat.length;
+  const done=pid==='all'?State.todos.filter(t=>t.status==='done').length:allForStat.filter(t=>t.status==='done').length;
+  const weekStart=new Date();weekStart.setDate(weekStart.getDate()-7);
+  const doneThisWeek=State.todos.filter(t=>t.status==='done'&&t.completedAt&&new Date(t.completedAt)>=weekStart).length;
+  const overdue=State.todos.filter(t=>t.status!=='done'&&t.dueDate&&daysBetween(t.dueDate,todayStr())<0).length;
+  const todayDone=State.todos.filter(t=>t.status==='done'&&t.completedAt&&fmtDate(t.completedAt)===todayStr()).length;
+  const projectTotal=pid!=='today'&&pid!=='all'?State.todos.filter(t=>t.projectId===pid).length:0;
+  const projectDone=pid!=='today'&&pid!=='all'?State.todos.filter(t=>t.projectId===pid&&t.status==='done').length:0;
+  const pct=projectTotal?Math.round(projectDone/projectTotal*100):0;
+
+  content.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center">${svg(titleIcon,18)}</div>
+      <div style="flex:1">
+        <h2 style="font-size:18px;font-weight:800;letter-spacing:-.3px">${titleEmoji} ${escapeHtml(title)}</h2>
+        <div style="font-size:12px;color:var(--text-3)">${pid!=='today'&&pid!=='all'&&projectTotal?`完成 ${projectDone}/${projectTotal} · 进度 ${pct}%`:pid==='today'?'今日需完成 + 进行中的任务':'所有未完成任务'}</div>
+      </div>
+      ${pid!=='today'&&pid!=='all'&&pid!=='all'?`<button class="btn btn-primary btn-sm" id="addTodoBtn">${svg(ICONS.plus,14)} 新建任务</button>`:pid==='all'?'':`<button class="btn btn-primary btn-sm" id="addTodoBtn">${svg(ICONS.plus,14)} 新建任务</button>`}
+    </div>
+    ${(pid!=='today'&&pid!=='all')&&projectTotal?`<div style="margin-bottom:16px"><div class="progress-bar"><div style="width:${pct}%;background:${(State.projects.find(p=>p.id===pid)||{}).color||'var(--primary)'}"></div></div></div>`:''}
+    <div class="stats-row">
+      <div class="stat-card todo"><div class="label">📋 待办</div><div class="value primary">${total-done}</div><div class="sub">进行中 ${allForStat.filter(t=>t.status==='in_progress').length}</div></div>
+      <div class="stat-card done"><div class="label">✅ 今日完成</div><div class="value success">${todayDone}</div><div class="sub">本周 ${doneThisWeek}</div></div>
+      <div class="stat-card overdue"><div class="label">🔥 逾期</div><div class="value ${overdue?'danger':''}">${overdue}</div><div class="sub">需立即处理</div></div>
+      <div class="stat-card total"><div class="label">📊 总计</div><div class="value">${pid==='all'?State.todos.length:total}</div><div class="sub">已完成 ${done}</div></div>
+    </div>
+    <div class="todo-toolbar">
+      <div class="search">
+        ${svg(ICONS.search,15)}
+        <input class="input" id="todoSearch" placeholder="搜索任务..." value="${escapeAttr(State.todoSearch)}">
+      </div>
+      <div class="filter-chips">
+        ${[['all','全部'],['pending','待办'],['in_progress','进行中'],['blocked','阻塞'],['done','已完成']].map(([k,l])=>`<div class="chip ${State.todoFilter===k?'active':''}" data-f="${k}">${l}</div>`).join('')}
+      </div>
+    </div>
+    <div class="todo-list" id="todoList">
+      ${displayTodos.length===0?`<div class="empty-state"><div class="emoji">🎉</div><h3>暂无任务</h3><p>${pid==='today'?'今日无待办，可以摸鱼了 ☕':'点击右上角新建任务'}</p></div>`:displayTodos.map(t=>renderTodoItem(t)).join('')}
+    </div>`;
+  main.appendChild(content);
+
+  // 事件绑定
+  sidebar.querySelectorAll('.sidebar-item').forEach(el=>el.onclick=()=>{State.currentProjectId=el.dataset.pid;renderMain();closeSidebar()});
+  $('#newProjectBtn').onclick=newProject;
+  const addBtn=$('#addTodoBtn');if(addBtn)addBtn.onclick=()=>editTodo(null);
+  const searchInput=$('#todoSearch');
+  if(searchInput){let timer;searchInput.oninput=e=>{clearTimeout(timer);timer=setTimeout(()=>{State.todoSearch=e.target.value;renderMain();const i=$('#todoSearch');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},250)}}
+  $$('.chip').forEach(c=>c.onclick=()=>{State.todoFilter=c.dataset.f;renderMain()});
+  $$('.todo-item').forEach(el=>{
+    const tid=el.dataset.tid;
+    el.querySelector('.todo-check').onclick=()=>toggleTodoStatus(tid);
+    el.querySelector('[data-act="edit"]').onclick=()=>editTodo(tid);
+    el.querySelector('[data-act="del"]').onclick=()=>deleteTodo(tid);
+    const cyc=el.querySelector('[data-act="cycle"]');if(cyc)cyc.onclick=()=>cycleTodoStatus(tid);
+  });
+}
+
+function renderTodoItem(t){
+  const proj=State.projects.find(p=>p.id===t.projectId);
+  const isOverdue=t.status!=='done'&&t.dueDate&&daysBetween(t.dueDate,todayStr())<0;
+  const dueTag=t.dueDate?(()=>{
+    const d=daysBetween(t.dueDate,todayStr());
+    if(d<0)return `<span class="due-tag overdue">${svg(ICONS.alert,10)}逾期${-d}天</span>`;
+    if(d===0)return `<span class="due-tag today">今天到期</span>`;
+    if(d<=3)return `<span class="due-tag soon">${d}天后</span>`;
+    return `<span class="due-tag">${fmtDate(t.dueDate)}</span>`;
+  })():'';
+  const statusBadge={
+    pending:'',in_progress:`<span class="badge" style="background:var(--warn-soft);color:var(--warn)">▶️ 进行中</span>`,
+    done:`<span class="badge" style="background:var(--success-soft);color:var(--success)">✅ 已完成</span>`,
+    blocked:`<span class="badge" style="background:var(--danger-soft);color:var(--danger)">🚧 阻塞</span>`,
+  }[t.status];
+  const prioFlag=`<span class="priority-flag ${t.priority||'medium'}" title="${({high:'高',medium:'中',low:'低'})[t.priority||'medium']}优先级">${svg(ICONS.flag,11)}</span>`;
+  return `<div class="todo-item ${t.status==='done'?'done':''} ${isOverdue?'overdue':''}" data-tid="${t.id}">
+    <div class="todo-check" title="切换完成">${t.status==='done'?svg(ICONS.check,11):''}</div>
+    <div class="todo-body">
+      <div class="todo-title">${escapeHtml(t.title)}</div>
+      ${t.detail?`<div style="font-size:12px;color:var(--text-3);margin-top:3px;white-space:pre-wrap">${escapeHtml(t.detail)}</div>`:''}
+      <div class="todo-meta">
+        ${prioFlag}
+        ${proj?`<span class="proj"><span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${proj.color}"></span>${escapeHtml(proj.name)}</span>`:''}
+        ${dueTag}
+        ${statusBadge}
+        ${t.completedAt?`<span title="完成时间">${svg(ICONS.check,10)}${fmtDate(t.completedAt)}</span>`:''}
+        ${t.blockedReason?`<span style="color:var(--danger)">${svg(ICONS.alert,10)}${escapeHtml(t.blockedReason)}</span>`:''}
+      </div>
+      ${t.blockedReason&&t.status==='blocked'?`<div class="blocked-reason">${svg(ICONS.alert,12)}阻塞原因：${escapeHtml(t.blockedReason)}</div>`:''}
+    </div>
+    <div class="todo-actions">
+      <button class="icon-btn" data-act="cycle" title="切换状态">${svg(ICONS.refresh,14)}</button>
+      <button class="icon-btn" data-act="edit" title="编辑">${svg(ICONS.edit,14)}</button>
+      <button class="icon-btn" data-act="del" title="删除">${svg(ICONS.trash,14)}</button>
+    </div>
+  </div>`;
+}
+
+async function newProject(){
+  const res=await promptBox('新建项目',{
+    fields:[
+      {id:'name',label:'项目名称',placeholder:'如：X12服务器主板v2'},
+      {id:'description',label:'项目描述',type:'textarea',rows:2,placeholder:'可选'},
+    ]
+  });
+  if(!res||!res.name.trim())return;
+  const color=PROJECT_COLORS[State.projects.length%PROJECT_COLORS.length];
+  const proj={id:uid(),name:res.name.trim(),description:res.description||'',color,createdAt:Date.now(),archived:false};
+  await DB.put('projects',proj);
+  State.projects.push(proj);
+  State.currentProjectId=proj.id;
+  toast('项目已创建','success');
+  renderMain();
+}
+
+async function editTodo(id){
+  const todo=id?State.todos.find(t=>t.id===id):null;
+  const isNew=!todo;
+  if(newTodoNeedsProject()){}
+  // 选项目（新建时若在今日/全部视图，需选项目）
+  const projectOptions=State.projects.map(p=>({id:p.id,name:p.name}));
+  if(projectOptions.length===0){toast('请先创建一个项目','warn');newProject();return}
+  const defaultPid=todo?todo.projectId:(State.currentProjectId&&State.currentProjectId!=='today'&&State.currentProjectId!=='all'?State.currentProjectId:projectOptions[0].id);
+  const res=await promptBox(isNew?'新建任务':'编辑任务',{
+    fields:[
+      {id:'title',label:'任务标题',value:todo?todo.title:'',placeholder:'如：完成CPU供电VRM调试'},
+      {id:'detail',label:'任务详情',type:'textarea',rows:3,value:todo?todo.detail||'':''},
+      {id:'projectId',label:'所属项目',type:'select',value:defaultPid,options:projectOptions.map(p=>({value:p.id,label:p.name}))},
+      {id:'priority',label:'优先级',type:'select',value:todo?todo.priority||'medium':'medium',options:[{value:'high',label:'高'},{value:'medium',label:'中'},{value:'low',label:'低'}]},
+      {id:'dueDate',label:'完成期限',type:'date',value:todo?todo.dueDate||'':''},
+      ...(todo?[{id:'blockedReason',label:'阻塞原因（仅阻塞状态时显示）',value:todo.blockedReason||'',placeholder:'如：等待BGA返板'}]:[]),
+    ]
+  });
+  // 自定义select渲染（promptBox默认是input，需要改造）。这里简化：用原生prompt补充。实际我们扩展promptBox支持select。
+  if(res===null)return;
+  // 由于promptBox对select支持有限，这里做兼容处理
+  const obj={
+    id:todo?todo.id:uid(),
+    title:res.title.trim(),
+    detail:res.detail||'',
+    projectId:res.projectId,
+    priority:res.priority,
+    dueDate:res.dueDate||null,
+    status:todo?todo.status:'pending',
+    createdAt:todo?todo.createdAt:Date.now(),
+    completedAt:todo?todo.completedAt:null,
+    blockedReason:res.blockedReason||null,
+  };
+  await DB.put('todos',obj);
+  if(isNew)State.todos.push(obj);else{const i=State.todos.findIndex(t=>t.id===id);if(i>=0)State.todos[i]=obj}
+  toast(isNew?'任务已创建':'任务已更新','success');
+  renderMain();
+}
+
+async function toggleTodoStatus(id){
+  const t=State.todos.find(x=>x.id===id);if(!t)return;
+  if(t.status==='done'){
+    t.status='pending';t.completedAt=null;
+  }else{
+    t.status='done';t.completedAt=Date.now();
+  }
+  await DB.put('todos',t);
+  renderMain();
+}
+async function cycleTodoStatus(id){
+  const t=State.todos.find(x=>x.id===id);if(!t)return;
+  const order=['pending','in_progress','blocked','done'];
+  const i=order.indexOf(t.status);
+  t.status=order[(i+1)%order.length];
+  if(t.status==='done')t.completedAt=Date.now();else t.completedAt=null;
+  if(t.status==='blocked'&&!t.blockedReason){const r=prompt('请输入阻塞原因：');if(r)t.blockedReason=r;else{toast('已设为阻塞','warn')}}
+  await DB.put('todos',t);
+  renderMain();
+}
+async function deleteTodo(id){
+  if(!await confirmBox('确定删除此任务？',{danger:true}))return;
+  await DB.del('todos',id);
+  State.todos=State.todos.filter(t=>t.id!==id);
+  toast('已删除','success');
+  renderMain();
+}
+function newTodoNeedsProject(){return false}
+
+/* ========================================================================
+ * 模块 B：零碎知识库
+ * ====================================================================== */
+async function renderKnowledge(main){
+  const sidebar=document.createElement('div');sidebar.className='sidebar';
+  const catCounts={};
+  State.knowledge.forEach(k=>{catCounts[k.category]=(catCounts[k.category]||0)+1});
+  sidebar.innerHTML=`
+    <div class="sidebar-head"><h3>📂 知识分类</h3>
+      <div style="display:flex;gap:2px">
+        <button class="icon-btn" id="addCatBtn" title="新建分类">➕</button>
+        <button class="icon-btn" id="exportKwBtn" title="导出知识库">${svg(ICONS.download,15)}</button>
+      </div>
+    </div>
+    <div class="sidebar-list">
+      <div class="sidebar-item ${State.kwCategoryFilter==='all'?'active':''}" data-cat="all">
+        <span class="dot" style="background:linear-gradient(135deg,#ef4444,#a855f7)"></span><span class="name">📋 全部</span><span class="count">${State.knowledge.length}</span>
+      </div>
+      ${CATEGORIES.map(c=>`<div class="sidebar-item ${State.kwCategoryFilter===c.id?'active':''}" data-cat="${c.id}">
+        <span class="dot" style="background:${c.color}"></span><span class="name">${c.emoji} ${escapeHtml(c.name)}</span><span class="count">${catCounts[c.id]||0}</span>
+      </div>`).join('')}
+    </div>`;
+  main.appendChild(sidebar);
+
+  const content=document.createElement('div');content.className='content';
+  let list=State.knowledge.slice();
+  if(State.kwCategoryFilter!=='all')list=list.filter(k=>k.category===State.kwCategoryFilter);
+  if(State.kwSearch){const q=State.kwSearch.toLowerCase();list=list.filter(k=>(k.content||'').toLowerCase().includes(q)||(k.summary||'').toLowerCase().includes(q))}
+  list.sort((a,b)=>b.createdAt-a.createdAt);
+
+  content.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--purple-soft);color:var(--purple);display:flex;align-items:center;justify-content:center">${svg(ICONS.book,18)}</div>
+      <div style="flex:1"><h2 style="font-size:18px;font-weight:800;letter-spacing:-.3px">📚 知识库</h2><div style="font-size:12px;color:var(--text-3)">${list.length} 条 · 自动分类${LLM.isAvailable()?' · LLM增强已启用':''}</div></div>
+    </div>
+    <div class="knowledge-input">
+      <textarea id="kwInput" class="textarea" placeholder="💡 快速记录零碎知识点，回车保存（Shift+回车换行）...&#10;例如：DDR4等长要求，地址/命令组内偏差≤25mil，数据组DQ/DQS内偏差≤10mil"></textarea>
+      <div class="knowledge-input-foot">
+        <div style="font-size:11px;color:var(--text-3)">将自动分类，可手动调整</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          ${LLM.isAvailable()?`<button class="btn btn-ghost btn-sm" id="kwAISummary" title="保存后用LLM生成摘要">✨ AI摘要</button>`:''}
+          <button class="btn btn-primary btn-sm" id="kwSaveBtn">${svg(ICONS.plus,13)}保存知识</button>
+        </div>
+      </div>
+    </div>
+    <div class="todo-toolbar" style="margin-bottom:14px">
+      <div class="search">${svg(ICONS.search,15)}<input class="input" id="kwSearch" placeholder="搜索知识内容..." value="${escapeAttr(State.kwSearch)}"></div>
+      ${LLM.isAvailable()?`<button class="btn btn-ghost btn-sm" id="kwBatchSummary" title="对当前分类批量生成综述">✨ 分类综述</button>`:''}
+    </div>
+    <div class="knowledge-grid" id="kwGrid">
+      ${list.length===0?`<div class="empty-state" style="grid-column:1/-1"><div class="emoji">📚</div><h3>暂无知识</h3><p>在上方输入框记录第一条知识点 ✍️</p></div>`:list.map(renderKnowledgeCard).join('')}
+    </div>`;
+  main.appendChild(content);
+
+  sidebar.querySelectorAll('.sidebar-item').forEach(el=>el.onclick=()=>{State.kwCategoryFilter=el.dataset.cat;renderMain();closeSidebar()});
+  const addCatBtn=$('#addCatBtn');if(addCatBtn)addCatBtn.onclick=addKnowledgeCategory;
+  $('#kwSaveBtn').onclick=saveKnowledge;
+  $('#kwInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();saveKnowledge()}};
+  if($('#kwAISummary'))$('#kwAISummary').onclick=()=>saveKnowledge(true);
+  if($('#kwBatchSummary'))$('#kwBatchSummary').onclick=batchSummary;
+  if($('#exportKwBtn'))$('#exportKwBtn').onclick=exportKnowledge;
+  const ss=$('#kwSearch');if(ss){let timer;ss.oninput=e=>{clearTimeout(timer);timer=setTimeout(()=>{State.kwSearch=e.target.value;renderMain();const i=$('#kwSearch');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},250)}}
+  $$('.k-card').forEach(el=>{
+    const kid=el.dataset.kid;
+    el.querySelector('[data-act="del"]').onclick=()=>deleteKnowledge(kid);
+    el.querySelector('[data-act="edit"]').onclick=()=>editKnowledge(kid);
+    el.querySelector('[data-act="cat"]').onclick=()=>changeKnowledgeCategory(kid);
+    if(el.querySelector('[data-act="ai"]'))el.querySelector('[data-act="ai"]').onclick=()=>aiSummaryKnowledge(kid);
+    const exp=el.querySelector('[data-act="expand"]');if(exp)exp.onclick=()=>{el.querySelector('.k-card-content').classList.toggle('expanded');exp.textContent=el.querySelector('.k-card-content').classList.contains('expanded')?'收起':'展开'};
+  });
+}
+
+function renderKnowledgeCard(k){
+  const cat=CAT_MAP[k.category]||CAT_MAP.other;
+  const content=k.content||'';
+  const isLong=content.length>300;
+  const tagsHtml=(k.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('');
+  return `<div class="k-card" data-kid="${k.id}">
+    <div class="k-card-content ${isLong?'':'expanded'}">${escapeHtml(content)}${content.includes('```')?'':(content.match(/```[\s\S]*?```/g)?'':'')}</div>
+    ${isLong?`<button class="btn btn-ghost btn-sm" style="margin-top:4px;align-self:flex-start" data-act="expand">展开</button>`:''}
+    ${k.summary?`<div class="k-summary-box"><div class="label">${svg(ICONS.sparkles,11)}摘要</div>${escapeHtml(k.summary)}</div>`:''}
+    <div class="k-card-foot">
+      <div class="k-card-meta">
+        <span class="badge" style="background:${cat.color}20;color:${cat.color}">${cat.emoji} ${cat.name}</span>
+        ${tagsHtml}
+        <span style="font-size:11px;color:var(--text-3);margin-left:auto">${fmtDate(k.createdAt)}</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:2px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+      <button class="icon-btn" data-act="cat" title="改分类" style="width:28px;height:28px">${svg(ICONS.tag,13)}</button>
+      ${LLM.isAvailable()?`<button class="icon-btn" data-act="ai" title="AI摘要" style="width:28px;height:28px">${svg(ICONS.sparkles,13)}</button>`:''}
+      <button class="icon-btn" data-act="edit" title="编辑" style="width:28px;height:28px">${svg(ICONS.edit,13)}</button>
+      <button class="icon-btn" data-act="del" title="删除" style="width:28px;height:28px;color:var(--danger)">${svg(ICONS.trash,13)}</button>
+    </div>
+  </div>`;
+}
+
+async function saveKnowledge(useAI=false){
+  const ta=$('#kwInput');const text=ta.value.trim();
+  if(!text){toast('请输入内容','warn');return}
+  const result=classifyKnowledge(text);
+  const k={id:uid(),content:text,source:'manual',category:result.cat,tags:[],createdAt:Date.now(),updatedAt:Date.now(),summary:null};
+  await DB.put('knowledge',k);
+  State.knowledge.push(k);
+  ta.value='';
+  toast(`已保存，自动归类为「${CAT_MAP[result.cat].name}」${result.uncertain?'（建议确认）':''}`,'success');
+  if(useAI&&LLM.isAvailable()){aiSummaryKnowledge(k.id)}
+  renderMain();
+}
+
+async function deleteKnowledge(id){
+  if(!await confirmBox('删除此条知识？',{danger:true}))return;
+  await DB.del('knowledge',id);
+  State.knowledge=State.knowledge.filter(k=>k.id!==id);
+  toast('已删除','success');
+  renderMain();
+}
+
+async function editKnowledge(id){
+  const k=State.knowledge.find(x=>x.id===id);if(!k)return;
+  const res=await promptBox('编辑知识',{fields:[{id:'content',label:'内容',type:'textarea',rows:6,value:k.content}]});
+  if(res===null)return;
+  k.content=res.content;k.updatedAt=Date.now();
+  await DB.put('knowledge',k);
+  toast('已更新','success');
+  renderMain();
+}
+
+async function changeKnowledgeCategory(id){
+  const k=State.knowledge.find(x=>x.id===id);if(!k)return;
+  const mask=document.createElement('div');mask.className='modal-mask';
+  mask.innerHTML=`<div class="modal" style="max-width:400px"><div class="modal-header"><h3 style="font-size:15px">选择分类</h3></div>
+    <div class="modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      ${CATEGORIES.map(c=>`<button class="btn ${k.category===c.id?'btn-primary':'btn-ghost'}" data-c="${c.id}" style="justify-content:flex-start"><span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.color};margin-right:6px"></span>${escapeHtml(c.name)}</button>`).join('')}
+    </div></div>`;
+  document.body.appendChild(mask);
+  mask.addEventListener('click',async e=>{
+    if(e.target===mask){mask.remove()}
+    else if(e.target.dataset.c){k.category=e.target.dataset.c;k.updatedAt=Date.now();await DB.put('knowledge',k);mask.remove();toast('分类已更新','success');renderMain()}
+  });
+}
+
+/* 预设调色板与 emoji（新增/编辑分类时复用） */
+const CAT_COLOR_PALETTE=['#ef4444','#f97316','#eab308','#22c55e','#10b981','#06b6d4','#3b82f6','#6366f1','#a855f7','#ec4899','#64748b','#0891b2'];
+const CAT_EMOJI_CHOICES=['⚡','📡','⏱️','🔧','🌡️','🔌','🔍','💾','🛡️','📦','🧮','🌊','📶','⏰','🐛','💡','🎯','📐','🔬','🧪','⚙️','📊','🚨','🎨'];
+
+async function addKnowledgeCategory(){
+  const res=await promptBox('新建知识分类',{fields:[
+    {id:'name',label:'分类名称',placeholder:'如：版本管理'},
+    {id:'emoji',label:'Emoji图标',value:'📦',placeholder:'输入或粘贴emoji'},
+    {id:'color',label:'颜色（十六进制，如 #ef4444）',value:'#6366f1',placeholder:'#ef4444'},
+    {id:'keywords',label:'关键词（逗号分隔，用于自动归类）',type:'textarea',rows:2,placeholder:'如：git,版本,release,branch'},
+  ]});
+  if(!res||!res.name.trim())return;
+  const color=/^#[0-9a-fA-F]{3,8}$/.test(res.color)?res.color:'#6366f1';
+  const kws=(res.keywords||'').split(/[,，\n]/).map(s=>s.trim()).filter(Boolean);
+  await CategoryStore.add({name:res.name.trim(),emoji:res.emoji||'📦',color,keywords:kws});
+  toast('分类已创建','success');
+  renderMain();
+}
+
+async function editKnowledgeCategory(id){
+  const c=CAT_MAP[id];if(!c)return;
+  const res=await promptBox('编辑分类',{fields:[
+    {id:'name',label:'分类名称',value:c.name},
+    {id:'emoji',label:'Emoji图标',value:c.emoji},
+    {id:'color',label:'颜色（十六进制）',value:c.color},
+    {id:'keywords',label:'关键词（逗号分隔）',type:'textarea',rows:3,value:(c.keywords||[]).join(', ')},
+  ]});
+  if(res===null)return;
+  const color=/^#[0-9a-fA-F]{3,8}$/.test(res.color)?res.color:c.color;
+  const kws=(res.keywords||'').split(/[,，\n]/).map(s=>s.trim()).filter(Boolean);
+  await CategoryStore.update(id,{name:res.name.trim()||c.name,emoji:res.emoji||c.emoji,color,keywords:kws});
+  toast('分类已更新','success');
+  renderMain();
+}
+
+async function deleteKnowledgeCategory(id){
+  const c=CAT_MAP[id];if(!c)return;
+  if(c.builtin){toast('内置分类不可删除（可编辑关键词）','warn');return}
+  if(!await confirmBox(`删除分类「${c.name}」？该分类下的知识将归入「其他」。`,{danger:true}))return;
+  const changed=await CategoryStore.remove(id);
+  toast('分类已删除'+(changed?'，相关知识已归入其他':''),'success');
+  if(State.kwCategoryFilter===id)State.kwCategoryFilter='all';
+  renderMain();
+}
+
+async function aiSummaryKnowledge(id){
+  if(!LLM.isAvailable()){toast('请先在设置中配置LLM','warn');return}
+  const k=State.knowledge.find(x=>x.id===id);if(!k)return;
+  toast('正在生成摘要...','info',4000);
+  try{
+    const sys='你是服务器硬件电路工程领域的知识助手。请用1-2句话精炼总结以下知识点的核心要点，并给出1-3个标签（用逗号分隔）。输出格式：第一行摘要，第二行"标签:tag1,tag2"';
+    const user=k.content;
+    const resp=await LLM.chat([{role:'system',content:sys},{role:'user',content:user}]);
+    const lines=resp.trim().split('\n');
+    let summary=resp,tags=k.tags||[];
+    const tagLine=lines.find(l=>l.trim().startsWith('标签'));
+    if(tagLine){summary=lines.filter(l=>!l.trim().startsWith('标签')).join('\n').trim();tags=tagLine.split(':')[1].split(',').map(s=>s.trim()).filter(Boolean)}
+    k.summary=summary;k.tags=tags;k.updatedAt=Date.now();
+    await DB.put('knowledge',k);
+    toast('摘要已生成','success');
+    renderMain();
+  }catch(e){toast('生成失败：'+e.message,'error',4000)}
+}
+
+async function batchSummary(){
+  if(!LLM.isAvailable())return;
+  const cat=State.kwCategoryFilter;
+  const list=cat==='all'?State.knowledge:State.knowledge.filter(k=>k.category===cat);
+  if(list.length===0){toast('该分类暂无知识','warn');return}
+  if(list.length>30){toast('数量较多，将只总结前30条','warn')}
+  toast('正在生成综述...','info',5000);
+  try{
+    const catName=cat==='all'?'全部':CAT_MAP[cat].name;
+    const content=list.slice(0,30).map((k,i)=>`[${i+1}] ${k.content.slice(0,200)}`).join('\n');
+    const sys=`你是服务器硬件电路工程领域专家。请对以下${catName}类知识点进行综述总结：提炼共性主题、指出关键要点、发现潜在关联。输出300字以内的结构化综述。`;
+    const resp=await LLM.chat([{role:'system',content:sys},{role:'user',content:content}]);
+    // 存为一条新知识
+    const k={id:uid(),content:`【${catName}综述 · ${fmtDate(Date.now())}】\n\n${resp}`,source:'ai',category:cat==='all'?'other':cat,tags:['综述'],createdAt:Date.now(),updatedAt:Date.now(),summary:'AI生成的分类综述'};
+    await DB.put('knowledge',k);
+    State.knowledge.push(k);
+    toast('综述已生成并保存','success');
+    renderMain();
+  }catch(e){toast('生成失败：'+e.message,'error',4000)}
+}
+
+async function exportKnowledge(){
+  const byCat={};
+  State.knowledge.forEach(k=>{(byCat[k.category]=byCat[k.category]||[]).push(k)});
+  let md='# 知识库导出\n\n导出时间：'+fmtDateTime(Date.now())+'\n\n';
+  CATEGORIES.forEach(c=>{
+    const list=byCat[c.id]||[];if(list.length===0)return;
+    md+=`## ${c.name}（${list.length}条）\n\n`;
+    list.forEach((k,i)=>{md+=`### ${i+1}. ${k.content.slice(0,40).replace(/\n/g,' ')}${k.content.length>40?'...':''}\n\n${k.content}\n\n${k.summary?`> **摘要**：${k.summary}\n\n`:''}${(k.tags&&k.tags.length)?`标签：${k.tags.join(', ')}\n\n`:''}---\n\n`});
+  });
+  const blob=new Blob([md],{type:'text/markdown'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`知识库_${todayStr()}.md`;a.click();
+  toast('已导出','success');
+}
+
+/* ========================================================================
+ * 模块 D：典型电路
+ * ====================================================================== */
+async function renderCircuit(main){
+  const sidebar=document.createElement('div');sidebar.className='sidebar';
+  const catCounts={};
+  State.circuits.forEach(c=>{catCounts[c.category]=(catCounts[c.category]||0)+1});
+  sidebar.innerHTML=`
+    <div class="sidebar-head"><h3>🔌 电路分类</h3>
+      <div style="display:flex;gap:2px">
+        <button class="icon-btn" id="exportCircuitBtn" title="导出">${svg(ICONS.download,15)}</button>
+      </div>
+    </div>
+    <div class="sidebar-list">
+      <div class="sidebar-item ${State.circuitCategoryFilter==='all'?'active':''}" data-cat="all">
+        <span class="dot" style="background:linear-gradient(135deg,#06b6d4,#a855f7)"></span><span class="name">📋 全部</span><span class="count">${State.circuits.length}</span>
+      </div>
+      ${CIRCUIT_CATEGORIES.map(c=>`<div class="sidebar-item ${State.circuitCategoryFilter===c.id?'active':''}" data-cat="${c.id}">
+        <span class="dot" style="background:${c.color}"></span><span class="name">${c.emoji} ${c.name}</span><span class="count">${catCounts[c.id]||0}</span>
+      </div>`).join('')}
+    </div>`;
+  main.appendChild(sidebar);
+
+  const content=document.createElement('div');content.className='content';
+  let list=State.circuits.slice();
+  if(State.circuitCategoryFilter!=='all')list=list.filter(c=>c.category===State.circuitCategoryFilter);
+  if(State.circuitSearch){const q=State.circuitSearch.toLowerCase();list=list.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.note||'').toLowerCase().includes(q)||(c.fileName||'').toLowerCase().includes(q)||(c.textContent||'').toLowerCase().includes(q))}
+  list.sort((a,b)=>b.createdAt-a.createdAt);
+
+  content.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--cyan-soft);color:var(--cyan);display:flex;align-items:center;justify-content:center">${svg(ICONS.folder,18)}</div>
+      <div style="flex:1"><h2 style="font-size:18px;font-weight:800;letter-spacing:-.3px">🔌 典型电路</h2><div style="font-size:12px;color:var(--text-3)">${list.length} 个 · 上传图片/CPM/文本自动分类整理</div></div>
+    </div>
+    <div class="circuit-input">
+      <div class="circuit-dropzone" id="circuitDrop">
+        ${svg(ICONS.upload,26)}
+        <div style="font-size:13px;font-weight:500;margin-top:4px">点击或拖拽上传电路文件</div>
+        <div style="font-size:11px;margin-top:2px">支持 图片(png/jpg/gif/webp) / Cadence .cpm / .txt / .md，单文件 ≤ 8MB</div>
+        <input type="file" id="circuitFile" style="display:none" accept="image/*,.cpm,.txt,.md,.markdown">
+      </div>
+      <div class="field" style="margin-bottom:8px">
+        <label>名称（可选，留空则用文件名）</label>
+        <input class="input" id="circuitName" placeholder="如：CPU核心供电VRM电路">
+      </div>
+      <div class="field" style="margin-bottom:8px">
+        <label>备注（可选，辅助自动分类）</label>
+        <textarea class="textarea" id="circuitNote" rows="2" placeholder="如：12相polyphase，TPS53679主控，耦合电感方案"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary btn-sm" id="circuitSaveBtn">${svg(ICONS.plus,13)}保存并自动分类</button>
+      </div>
+    </div>
+    <div class="todo-toolbar" style="margin-bottom:14px">
+      <div class="search">${svg(ICONS.search,15)}<input class="input" id="circuitSearch" placeholder="搜索电路名称/备注/文件内容..." value="${escapeAttr(State.circuitSearch)}"></div>
+    </div>
+    <div class="knowledge-grid" id="circuitGrid">
+      ${list.length===0?`<div class="empty-state" style="grid-column:1/-1"><div class="emoji">🔌</div><h3>暂无电路</h3><p>上传第一张电路图或.cpm文件 ✍️</p></div>`:list.map(renderCircuitCard).join('')}
+    </div>`;
+  main.appendChild(content);
+
+  sidebar.querySelectorAll('.sidebar-item').forEach(el=>el.onclick=()=>{State.circuitCategoryFilter=el.dataset.cat;renderMain();closeSidebar()});
+  // 文件上传
+  const fileInput=$('#circuitFile');
+  $('#circuitDrop').onclick=()=>fileInput.click();
+  const drop=$('#circuitDrop');
+  drop.ondragover=e=>{e.preventDefault();drop.classList.add('dragover')};
+  drop.ondragleave=()=>drop.classList.remove('dragover');
+  drop.ondrop=e=>{e.preventDefault();drop.classList.remove('dragover');if(e.dataTransfer.files[0])handleCircuitFile(e.dataTransfer.files[0])};
+  fileInput.onchange=e=>{if(e.target.files[0])handleCircuitFile(e.target.files[0])};
+  $('#circuitSaveBtn').onclick=saveCircuit;
+  if($('#exportCircuitBtn'))$('#exportCircuitBtn').onclick=exportCircuits;
+  const ss=$('#circuitSearch');if(ss){let timer;ss.oninput=e=>{clearTimeout(timer);timer=setTimeout(()=>{State.circuitSearch=e.target.value;renderMain();const i=$('#circuitSearch');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},250)}}
+  $$('.circuit-card').forEach(el=>{
+    const cid=el.dataset.cid;
+    el.querySelector('[data-act="del"]').onclick=()=>deleteCircuit(cid);
+    el.querySelector('[data-act="edit"]').onclick=()=>editCircuit(cid);
+    el.querySelector('[data-act="cat"]').onclick=()=>changeCircuitCategory(cid);
+    const dl=el.querySelector('[data-act="dl"]');if(dl)dl.onclick=()=>downloadCircuit(cid);
+    const thumb=el.querySelector('[data-act="thumb"]');if(thumb)thumb.onclick=()=>{if(thumb.dataset.full)window.open(thumb.dataset.full,'_blank')};
+  });
+  // 暂存上传的待保存文件
+  if(!_circuitPending)_circuitPending=null;
+}
+
+let _circuitPending=null;
+async function handleCircuitFile(file){
+  if(file.size>8*1024*1024){toast('文件超过8MB限制','error');return}
+  const ext=file.name.split('.').pop().toLowerCase();
+  const isImage=/^(png|jpe?g|gif|webp|bmp|svg)$/.test(ext);
+  _circuitPending={file,ext,isImage,name:file.name};
+  // 预填名称
+  const nameInput=$('#circuitName');
+  if(nameInput&&!nameInput.value)nameInput.value=file.name.replace(/\.[^.]+$/,'');
+  toast(`已选择 ${file.name}，点击保存按钮上传`,'info');
+  // 图片直接预览
+  if(isImage){
+    const reader=new FileReader();
+    reader.onload=()=>{_circuitPending.dataUrl=reader.result;toast('图片已就绪','success')};
+    reader.readAsDataURL(file);
+  }
+}
+
+async function saveCircuit(){
+  if(!_circuitPending||!_circuitPending.file){toast('请先选择文件','warn');return}
+  const name=($('#circuitName').value||_circuitPending.name).trim();
+  const note=$('#circuitNote').value.trim();
+  const p=_circuitPending;
+  let fileType,fileData='',textContent='',thumbUrl='';
+  try{
+    if(p.isImage){
+      fileType='image';
+      if(!p.dataUrl){const b=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(p.file)});p.dataUrl=b}
+      fileData=p.dataUrl;thumbUrl=p.dataUrl;
+    }else if(['cpm','txt','md','markdown'].includes(p.ext)){
+      fileType=p.ext==='cpm'?'cpm':'text';
+      try{
+        textContent=await p.file.text();
+        if(textContent.length>20000)textContent=textContent.slice(0,20000)+'\n...(内容过长已截断)';
+        fileData=textContent;
+      }catch(e){toast('文件读取失败，仅保存文件名','warn');textContent=''}
+    }else{
+      toast('不支持的文件类型：'+p.ext,'error');return;
+    }
+    // 自动分类
+    const classifyInput=[name,note,textContent,p.name].join(' ');
+    const result=classifyCircuit(classifyInput);
+    const obj={id:uid(),name,note,category:result.cat,fileType,fileName:p.name,fileData,textContent,thumbUrl,tags:[],createdAt:Date.now(),updatedAt:Date.now()};
+    await DB.put('circuits',obj);
+    State.circuits.push(obj);
+    _circuitPending=null;
+    toast(`已保存，自动归类为「${CIRCUIT_CAT_MAP[result.cat].name}」${result.uncertain?'（建议确认）':''}`,'success');
+    renderMain();
+  }catch(e){toast('保存失败：'+e.message,'error',5000)}
+}
+
+function renderCircuitCard(c){
+  const cat=CIRCUIT_CAT_MAP[c.category]||CIRCUIT_CAT_MAP.cother;
+  const isImage=c.fileType==='image';
+  const preview=isImage?
+    `<img class="circuit-thumb" data-act="thumb" data-full="${escapeAttr(c.thumbUrl)}" src="${escapeAttr(c.thumbUrl)}" alt="${escapeAttr(c.name)}">`:
+    `<div class="circuit-file-card"><div style="font-size:36px">${c.fileType==='cpm'?'📐':'📄'}</div><div class="fname">${escapeHtml(c.fileName||'')}</div><div style="font-size:10px;color:var(--text-3)">${c.fileType?.toUpperCase()||'TEXT'}</div></div>`;
+  const noteHtml=c.note?`<div style="font-size:12px;color:var(--text-2);margin-top:6px;white-space:pre-wrap;line-height:1.6">${escapeHtml(c.note)}</div>`:'';
+  const textPreview=c.textContent&&!isImage?`<div style="font-size:11px;color:var(--text-3);margin-top:6px;max-height:60px;overflow:hidden;white-space:pre-wrap;font-family:var(--mono);background:var(--bg-solid);padding:6px;border-radius:6px">${escapeHtml(c.textContent.slice(0,300))}${c.textContent.length>300?'...':''}</div>`:'';
+  return `<div class="k-card circuit-card" data-cid="${c.id}">
+    ${preview}
+    <div style="font-size:14px;font-weight:600;margin-top:8px">${escapeHtml(c.name)}</div>
+    ${noteHtml}
+    ${textPreview}
+    <div class="k-card-foot">
+      <div class="k-card-meta">
+        <span class="badge" style="background:${cat.color}20;color:${cat.color}">${cat.emoji} ${cat.name}</span>
+        <span class="badge" style="background:var(--info-soft);color:var(--info)">${isImage?'🖼️ 图片':c.fileType==='cpm'?'📐 CPM':'📄 文本'}</span>
+        <span style="font-size:11px;color:var(--text-3);margin-left:auto">${fmtDate(c.createdAt)}</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:2px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+      <button class="icon-btn" data-act="cat" title="改分类" style="width:28px;height:28px">${svg(ICONS.tag,13)}</button>
+      <button class="icon-btn" data-act="dl" title="下载原文件" style="width:28px;height:28px">${svg(ICONS.download,13)}</button>
+      <button class="icon-btn" data-act="edit" title="编辑" style="width:28px;height:28px">${svg(ICONS.edit,13)}</button>
+      <button class="icon-btn" data-act="del" title="删除" style="width:28px;height:28px;color:var(--danger)">${svg(ICONS.trash,13)}</button>
+    </div>
+  </div>`;
+}
+
+async function deleteCircuit(id){
+  if(!await confirmBox('删除此电路记录？',{danger:true}))return;
+  await DB.del('circuits',id);
+  State.circuits=State.circuits.filter(c=>c.id!==id);
+  toast('已删除','success');
+  renderMain();
+}
+
+async function editCircuit(id){
+  const c=State.circuits.find(x=>x.id===id);if(!c)return;
+  const res=await promptBox('编辑电路',{fields:[
+    {id:'name',label:'名称',value:c.name},
+    {id:'note',label:'备注',type:'textarea',rows:3,value:c.note||''},
+  ]});
+  if(res===null)return;
+  c.name=res.name.trim();c.note=res.note;c.updatedAt=Date.now();
+  await DB.put('circuits',c);
+  toast('已更新','success');
+  renderMain();
+}
+
+async function changeCircuitCategory(id){
+  const c=State.circuits.find(x=>x.id===id);if(!c)return;
+  const mask=document.createElement('div');mask.className='modal-mask';
+  mask.innerHTML=`<div class="modal" style="max-width:400px"><div class="modal-header"><h3 style="font-size:15px">选择电路分类</h3></div>
+    <div class="modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      ${CIRCUIT_CATEGORIES.map(cc=>`<button class="btn ${c.category===cc.id?'btn-primary':'btn-ghost'}" data-c="${cc.id}" style="justify-content:flex-start"><span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${cc.color};margin-right:6px"></span>${cc.name}</button>`).join('')}
+    </div></div>`;
+  document.body.appendChild(mask);
+  mask.addEventListener('click',async e=>{
+    if(e.target===mask){mask.remove()}
+    else if(e.target.dataset.c){c.category=e.target.dataset.c;c.updatedAt=Date.now();await DB.put('circuits',c);mask.remove();toast('分类已更新','success');renderMain()}
+  });
+}
+
+async function downloadCircuit(id){
+  const c=State.circuits.find(x=>x.id===id);if(!c)return;
+  try{
+    let blob;
+    if(c.fileType==='image'){const r=await fetch(c.fileData);blob=await r.blob()}
+    else{blob=new Blob([c.textContent||c.fileData||''],{type:'text/plain'})}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=c.fileName||`${c.name}.txt`;a.click();
+    toast('已下载','success');
+  }catch(e){toast('下载失败：'+e.message,'error')}
+}
+
+async function exportCircuits(){
+  if(State.circuits.length===0){toast('暂无电路数据','warn');return}
+  let md='# 典型电路导出\n\n导出时间：'+fmtDateTime(Date.now())+'\n\n';
+  const byCat={};
+  State.circuits.forEach(c=>{(byCat[c.category]=byCat[c.category]||[]).push(c)});
+  CIRCUIT_CATEGORIES.forEach(c=>{
+    const list=byCat[c.id]||[];if(list.length===0)return;
+    md+=`## ${c.emoji} ${c.name}（${list.length}个）\n\n`;
+    list.forEach((c,i)=>{
+      md+=`### ${i+1}. ${c.name}\n\n`;
+      if(c.note)md+=`> 备注：${c.note}\n\n`;
+      if(c.fileName)md+=`- 文件：${c.fileName}（${c.fileType}）\n`;
+      md+=`- 添加日期：${fmtDate(c.createdAt)}\n`;
+      if(c.textContent){md+=`\n\`\`\`\n${c.textContent.slice(0,500)}${c.textContent.length>500?'\n...':''}\n\`\`\`\n`}
+      md+='\n---\n\n';
+    });
+  });
+  const blob=new Blob([md],{type:'text/markdown'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`典型电路_${todayStr()}.md`;a.click();
+  toast('已导出','success');
+}
+
+/* ========================================================================
+ * 模块 E：典型Bug汇总
+ * ====================================================================== */
+async function renderBug(main){
+  const sidebar=document.createElement('div');sidebar.className='sidebar';
+  const catCounts={},sevCounts={};
+  State.bugs.forEach(b=>{catCounts[b.category]=(catCounts[b.category]||0)+1;sevCounts[b.severity]=(sevCounts[b.severity]||0)+1});
+  sidebar.innerHTML=`
+    <div class="sidebar-head"><h3>🐛 Bug筛选</h3>
+      <button class="icon-btn" id="exportBugBtn" title="导出">${svg(ICONS.download,15)}</button>
+    </div>
+    <div class="sidebar-list">
+      <div class="bug-sidebar-section">
+        <div class="stitle">按类型</div>
+        <div class="sidebar-item ${State.bugCategoryFilter==='all'?'active':''}" data-cat="all">
+          <span class="dot" style="background:linear-gradient(135deg,#ef4444,#a855f7)"></span><span class="name">📋 全部类型</span><span class="count">${State.bugs.length}</span>
+        </div>
+        ${BUG_CATEGORIES.map(c=>`<div class="sidebar-item ${State.bugCategoryFilter===c.id?'active':''}" data-cat="${c.id}">
+          <span class="dot" style="background:${c.color}"></span><span class="name">${c.emoji} ${c.name}</span><span class="count">${catCounts[c.id]||0}</span>
+        </div>`).join('')}
+      </div>
+      <div class="bug-sidebar-section" style="border-top:1px solid var(--border);margin-top:4px">
+        <div class="stitle">按严重程度</div>
+        <div class="sidebar-item ${State.bugSeverityFilter==='all'?'active':''}" data-sev="all">
+          <span class="dot" style="background:linear-gradient(135deg,#94a3b8,#475569)"></span><span class="name">📋 全部程度</span><span class="count">${State.bugs.length}</span>
+        </div>
+        ${SEVERITIES.map(s=>`<div class="sidebar-item ${State.bugSeverityFilter===s.id?'active':''}" data-sev="${s.id}">
+          <span class="dot" style="background:${s.color}"></span><span class="name">${s.emoji} ${s.name}</span><span class="count">${sevCounts[s.id]||0}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  main.appendChild(sidebar);
+
+  const content=document.createElement('div');content.className='content';
+  let list=State.bugs.slice();
+  if(State.bugCategoryFilter!=='all')list=list.filter(b=>b.category===State.bugCategoryFilter);
+  if(State.bugSeverityFilter!=='all')list=list.filter(b=>b.severity===State.bugSeverityFilter);
+  if(State.bugSearch){const q=State.bugSearch.toLowerCase();list=list.filter(b=>(b.title||'').toLowerCase().includes(q)||(b.content||'').toLowerCase().includes(q))}
+  list.sort((a,b)=>b.createdAt-a.createdAt);
+
+  // 统计
+  const total=State.bugs.length;
+  const crit=sevCounts.critical||0,maj=sevCounts.major||0,nor=sevCounts.normal||0,min=sevCounts.minor||0;
+
+  content.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--danger-soft);color:var(--danger);display:flex;align-items:center;justify-content:center">${svg(ICONS.alert,18)}</div>
+      <div style="flex:1"><h2 style="font-size:18px;font-weight:800;letter-spacing:-.3px">🐛 典型Bug汇总</h2><div style="font-size:12px;color:var(--text-3)">${list.length} 条 · 自动按类型+严重程度分类${LLM.isAvailable()?' · LLM增强':''}</div></div>
+    </div>
+    <div class="bug-stats-row">
+      <div class="bug-stat" style="border-left-color:#ef4444"><div class="blabel">🔴 致命</div><div class="bval" style="color:#ef4444">${crit}</div></div>
+      <div class="bug-stat" style="border-left-color:#f97316"><div class="blabel">🟠 严重</div><div class="bval" style="color:#f97316">${maj}</div></div>
+      <div class="bug-stat" style="border-left-color:#eab308"><div class="blabel">🟡 一般</div><div class="bval" style="color:#eab308">${nor}</div></div>
+      <div class="bug-stat" style="border-left-color:#94a3b8"><div class="blabel">⚪ 轻微</div><div class="bval" style="color:#94a3b8">${min}</div></div>
+    </div>
+    <div class="bug-input">
+      <div class="field" style="margin-bottom:8px">
+        <label>Bug标题</label>
+        <input class="input" id="bugTitle" placeholder="如：DDR4通道数据眼图闭合导致偶发死机">
+      </div>
+      <div class="field" style="margin-bottom:8px">
+        <label>详细描述（症状/复现/分析/结论）</label>
+        <textarea class="textarea" id="bugContent" rows="4" placeholder="详细描述问题现象、复现条件、排查过程、根因和解决方案...&#10;例如：高温75℃下，DDR4通道DQ0-DQ7眼图高度不足200mV，偶发位错误导致系统蓝屏。根因为等长偏差超25mil，调整布线后解决。"></textarea>
+      </div>
+      <div class="field" style="margin-bottom:10px">
+        <label>附图（可选，可多选）</label>
+        <input type="file" id="bugImages" accept="image/*" multiple style="font-size:12px">
+        <div id="bugImgPreview" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:6px">
+        <button class="btn btn-primary btn-sm" id="bugSaveBtn">${svg(ICONS.plus,13)}保存并自动分类</button>
+      </div>
+    </div>
+    <div class="todo-toolbar" style="margin-bottom:14px">
+      <div class="search">${svg(ICONS.search,15)}<input class="input" id="bugSearch" placeholder="搜索Bug标题/内容..." value="${escapeAttr(State.bugSearch)}"></div>
+    </div>
+    <div class="todo-list" id="bugList">
+      ${list.length===0?`<div class="empty-state"><div class="emoji">🐛</div><h3>暂无Bug记录</h3><p>记录第一个典型Bug，沉淀经验 ✍️</p></div>`:list.map(renderBugCard).join('')}
+    </div>`;
+  main.appendChild(content);
+
+  sidebar.querySelectorAll('[data-cat]').forEach(el=>el.onclick=()=>{State.bugCategoryFilter=el.dataset.cat;renderMain();closeSidebar()});
+  sidebar.querySelectorAll('[data-sev]').forEach(el=>el.onclick=()=>{State.bugSeverityFilter=el.dataset.sev;renderMain();closeSidebar()});
+  $('#bugSaveBtn').onclick=saveBug;
+  if($('#exportBugBtn'))$('#exportBugBtn').onclick=exportBugs;
+  // 图片预览
+  const imgInput=$('#bugImages');
+  if(imgInput){
+    imgInput.onchange=e=>{
+      const files=Array.from(e.target.files);
+      const preview=$('#bugImgPreview');
+      preview.innerHTML='';
+      window._bugPendingImages=[];
+      files.forEach(f=>{
+        const reader=new FileReader();
+        reader.onload=()=>{window._bugPendingImages.push(reader.result);const im=document.createElement('img');im.src=reader.result;im.style.cssText='width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border)';preview.appendChild(im)};
+        reader.readAsDataURL(f);
+      });
+    };
+  }
+  const ss=$('#bugSearch');if(ss){let timer;ss.oninput=e=>{clearTimeout(timer);timer=setTimeout(()=>{State.bugSearch=e.target.value;renderMain();const i=$('#bugSearch');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},250)}}
+  $$('.bug-card').forEach(el=>{
+    const bid=el.dataset.bid;
+    el.querySelector('[data-act="del"]').onclick=()=>deleteBug(bid);
+    el.querySelector('[data-act="edit"]').onclick=()=>editBug(bid);
+    el.querySelector('[data-act="cat"]').onclick=()=>changeBugCategory(bid);
+    el.querySelector('[data-act="sev"]').onclick=()=>changeBugSeverity(bid);
+    if(el.querySelector('[data-act="ai"]'))el.querySelector('[data-act="ai"]').onclick=()=>aiSummaryBug(bid);
+    // 图片点击放大
+    el.querySelectorAll('[data-img]').forEach(im=>im.onclick=()=>window.open(im.dataset.img,'_blank'));
+  });
+}
+
+let _bugPendingImages=[];
+
+async function saveBug(){
+  const title=$('#bugTitle').value.trim();
+  const content=$('#bugContent').value.trim();
+  if(!title&&!content){toast('请输入标题或内容','warn');return}
+  const images=(window._bugPendingImages||[]).slice();
+  const classifyInput=[title,content].join(' ');
+  const result=classifyBug(classifyInput);
+  const obj={id:uid(),title:title||content.slice(0,30),content,category:result.cat,severity:result.severity,tags:[],images,createdAt:Date.now(),updatedAt:Date.now(),summary:null};
+  await DB.put('bugs',obj);
+  State.bugs.push(obj);
+  window._bugPendingImages=[];
+  toast(`已保存，类型「${BUG_CAT_MAP[result.cat].name}」· 严重程度「${SEV_MAP[result.severity].name}」${result.uncertain?'（建议确认）':''}`,'success');
+  renderMain();
+}
+
+function renderBugCard(b){
+  const cat=BUG_CAT_MAP[b.category]||BUG_CAT_MAP.bother;
+  const sev=SEV_MAP[b.severity]||SEV_MAP.normal;
+  const imagesHtml=(b.images&&b.images.length)?`<div class="bug-images">${b.images.map(src=>`<img data-img="${escapeAttr(src)}" src="${escapeAttr(src)}" alt="bug图">`).join('')}</div>`:'';
+  return `<div class="bug-card sev-${b.severity||'normal'}" data-bid="${b.id}">
+    <div style="display:flex;align-items:flex-start;gap:8px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600">${escapeHtml(b.title)}</div>
+        ${b.content?`<div style="font-size:13px;color:var(--text-2);margin-top:4px;white-space:pre-wrap;line-height:1.6">${escapeHtml(b.content)}</div>`:''}
+        ${imagesHtml}
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px">
+          <span class="badge" style="background:${cat.color}20;color:${cat.color}">${cat.emoji} ${cat.name}</span>
+          <span class="badge" style="background:${sev.color}20;color:${sev.color}">${sev.emoji} ${sev.name}</span>
+          <span style="font-size:11px;color:var(--text-3);margin-left:auto">${fmtDate(b.createdAt)}</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:2px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+      <button class="icon-btn" data-act="cat" title="改类型" style="width:28px;height:28px">${svg(ICONS.tag,13)}</button>
+      <button class="icon-btn" data-act="sev" title="改严重程度" style="width:28px;height:28px">${svg(ICONS.flag,13)}</button>
+      ${LLM.isAvailable()?`<button class="icon-btn" data-act="ai" title="AI摘要" style="width:28px;height:28px">${svg(ICONS.sparkles,13)}</button>`:''}
+      <button class="icon-btn" data-act="edit" title="编辑" style="width:28px;height:28px">${svg(ICONS.edit,13)}</button>
+      <button class="icon-btn" data-act="del" title="删除" style="width:28px;height:28px;color:var(--danger)">${svg(ICONS.trash,13)}</button>
+    </div>
+  </div>`;
+}
+
+async function deleteBug(id){
+  if(!await confirmBox('删除此Bug记录？',{danger:true}))return;
+  await DB.del('bugs',id);
+  State.bugs=State.bugs.filter(b=>b.id!==id);
+  toast('已删除','success');
+  renderMain();
+}
+
+async function editBug(id){
+  const b=State.bugs.find(x=>x.id===id);if(!b)return;
+  const res=await promptBox('编辑Bug',{fields:[
+    {id:'title',label:'标题',value:b.title},
+    {id:'content',label:'详细描述',type:'textarea',rows:6,value:b.content||''},
+  ]});
+  if(res===null)return;
+  b.title=res.title.trim();b.content=res.content;b.updatedAt=Date.now();
+  await DB.put('bugs',b);
+  toast('已更新','success');
+  renderMain();
+}
+
+async function changeBugCategory(id){
+  const b=State.bugs.find(x=>x.id===id);if(!b)return;
+  const mask=document.createElement('div');mask.className='modal-mask';
+  mask.innerHTML=`<div class="modal" style="max-width:420px"><div class="modal-header"><h3 style="font-size:15px">选择Bug类型</h3></div>
+    <div class="modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      ${BUG_CATEGORIES.map(c=>`<button class="btn ${b.category===c.id?'btn-primary':'btn-ghost'}" data-c="${c.id}" style="justify-content:flex-start"><span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.color};margin-right:6px"></span>${c.name}</button>`).join('')}
+    </div></div>`;
+  document.body.appendChild(mask);
+  mask.addEventListener('click',async e=>{
+    if(e.target===mask){mask.remove()}
+    else if(e.target.dataset.c){b.category=e.target.dataset.c;b.updatedAt=Date.now();await DB.put('bugs',b);mask.remove();toast('类型已更新','success');renderMain()}
+  });
+}
+
+async function changeBugSeverity(id){
+  const b=State.bugs.find(x=>x.id===id);if(!b)return;
+  const mask=document.createElement('div');mask.className='modal-mask';
+  mask.innerHTML=`<div class="modal" style="max-width:400px"><div class="modal-header"><h3 style="font-size:15px">选择严重程度</h3></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:6px">
+      ${SEVERITIES.map(s=>`<button class="btn ${b.severity===s.id?'btn-primary':'btn-ghost'}" data-s="${s.id}" style="justify-content:flex-start"><span class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${s.color};margin-right:8px"></span>${s.emoji} ${s.name}</button>`).join('')}
+    </div></div>`;
+  document.body.appendChild(mask);
+  mask.addEventListener('click',async e=>{
+    if(e.target===mask){mask.remove()}
+    else if(e.target.dataset.s){b.severity=e.target.dataset.s;b.updatedAt=Date.now();await DB.put('bugs',b);mask.remove();toast('严重程度已更新','success');renderMain()}
+  });
+}
+
+async function aiSummaryBug(id){
+  if(!LLM.isAvailable()){toast('请先在设置中配置LLM','warn');return}
+  const b=State.bugs.find(x=>x.id===id);if(!b)return;
+  toast('正在生成摘要...','info',4000);
+  try{
+    const sys='你是服务器硬件电路工程领域的Bug分析助手。请用1-2句话精炼总结以下Bug的核心问题、根因和解决方案，并给出1-3个标签（逗号分隔）。输出格式：第一行摘要，第二行"标签:tag1,tag2"';
+    const user=`标题：${b.title}\n内容：${b.content||''}`;
+    const resp=await LLM.chat([{role:'system',content:sys},{role:'user',content:user}]);
+    const lines=resp.trim().split('\n');
+    let summary=resp,tags=b.tags||[];
+    const tagLine=lines.find(l=>l.trim().startsWith('标签'));
+    if(tagLine){summary=lines.filter(l=>!l.trim().startsWith('标签')).join('\n').trim();tags=tagLine.split(':')[1].split(',').map(s=>s.trim()).filter(Boolean)}
+    b.summary=summary;b.tags=tags;b.updatedAt=Date.now();
+    await DB.put('bugs',b);
+    toast('摘要已生成','success');
+    renderMain();
+  }catch(e){toast('生成失败：'+e.message,'error',4000)}
+}
+
+async function exportBugs(){
+  if(State.bugs.length===0){toast('暂无Bug数据','warn');return}
+  let md='# 典型Bug汇总导出\n\n导出时间：'+fmtDateTime(Date.now())+'\n\n';
+  const byCat={};
+  State.bugs.forEach(b=>{(byCat[b.category]=byCat[b.category]||[]).push(b)});
+  BUG_CATEGORIES.forEach(c=>{
+    const list=byCat[c.id]||[];if(list.length===0)return;
+    md+=`## ${c.emoji} ${c.name}（${list.length}条）\n\n`;
+    list.forEach((b,i)=>{
+      const sev=SEV_MAP[b.severity]||SEV_MAP.normal;
+      md+=`### ${i+1}. [${sev.emoji}${sev.name}] ${b.title}\n\n`;
+      if(b.content)md+=`${b.content}\n\n`;
+      md+=`- 严重程度：${sev.name}\n- 记录日期：${fmtDate(b.createdAt)}\n`;
+      if(b.summary)md+=`- **摘要**：${b.summary}\n`;
+      md+='\n---\n\n';
+    });
+  });
+  const blob=new Blob([md],{type:'text/markdown'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Bug汇总_${todayStr()}.md`;a.click();
+  toast('已导出','success');
+}
+
+/* ========================================================================
+ * 模块 C：SOP整理器
+ * ====================================================================== */
+async function renderSop(main){
+  const layout=document.createElement('div');layout.className='content';
+  layout.style.padding='20px 24px';
+  layout.style.overflow='hidden';
+  layout.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--info-soft);color:var(--info);display:flex;align-items:center;justify-content:center">${svg(ICONS.file,18)}</div>
+      <div style="flex:1"><h2 style="font-size:18px;font-weight:800;letter-spacing:-.3px">📄 SOP 工作流程整理</h2><div style="font-size:12px;color:var(--text-3)">上传资料 → 提取文本 → 整理为标准SOP${LLM.isAvailable()?' · LLM模式':' · 本地规则模式'}</div></div>
+      <button class="btn btn-ghost btn-sm" id="sopHistoryBtn" title="历史SOP">📚 历史</button>
+    </div>
+    <div class="sop-mobile-tabs" id="sopMobileTabs">
+      <div class="sop-mobile-tab active" data-pane="input">${svg(ICONS.upload,13)} 输入源</div>
+      <div class="sop-mobile-tab" data-pane="output">${svg(ICONS.file,13)} SOP输出</div>
+    </div>
+    <div class="sop-layout">
+      <div class="sop-pane mobile-active" id="sopPaneInput">
+        <div class="sop-pane-head"><h3>${svg(ICONS.upload,14)} 输入源</h3>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" id="sopClearBtn">清空</button>
+          </div>
+        </div>
+        <div class="sop-pane-body">
+          <div class="sop-dropzone" id="sopDrop">
+            ${svg(ICONS.upload,28)}
+            <div style="font-size:13px;font-weight:500;margin-bottom:4px">拖拽文件到此处或点击选择</div>
+            <div style="font-size:11px">支持 PDF / Word(.docx) / Markdown / TXT / CSV，单文件 ≤ 20MB</div>
+            <input type="file" id="sopFile" style="display:none" accept=".pdf,.docx,.md,.txt,.csv,.markdown">
+          </div>
+          <div class="field">
+            <label>原始文本（可手动编辑修正）</label>
+            <textarea class="textarea sop-source" id="sopText" placeholder="粘贴或上传文件后的文本将显示在此处，可手动修正...">${escapeHtml(State.sopSourceText)}</textarea>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" id="sopLocalBtn">⚡ 本地规则整理</button>
+            ${LLM.isAvailable()?`<button class="btn btn-purple" id="sopAIBtn">✨ AI智能整理</button>`:`<button class="btn btn-ghost" disabled title="需在设置启用LLM">✨ AI整理</button>`}
+          </div>
+        </div>
+      </div>
+      <div class="sop-pane" id="sopPaneOutput">
+        <div class="sop-pane-head"><h3>${svg(ICONS.file,14)} SOP输出</h3>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" id="sopSaveBtn" title="保存到历史">💾 保存</button>
+            <button class="btn btn-ghost btn-sm" id="sopExportBtn" title="导出Markdown">⬇️ 导出</button>
+            <button class="btn btn-ghost btn-sm" id="sopPrintBtn" title="打印PDF">🖨️ 打印</button>
+          </div>
+        </div>
+        <div class="sop-pane-body sop-output" id="sopOutput">
+          ${State.sopOutputMd?marked.parse(State.sopOutputMd):`<div class="empty-state"><div class="emoji">🚀</div><h3>等待整理</h3><p>上传资料或粘贴文本后，点击整理按钮</p></div>`}
+        </div>
+      </div>
+    </div>`;
+  // 兼容样式：content作为sop容器
+  layout.className='content';
+  main.appendChild(layout);
+
+  $('#sopDrop').onclick=()=>$('#sopFile').click();
+  $('#sopFile').onchange=e=>{if(e.target.files[0])parseSopFile(e.target.files[0])};
+  const drop=$('#sopDrop');
+  drop.ondragover=e=>{e.preventDefault();drop.classList.add('dragover')};
+  drop.ondragleave=()=>drop.classList.remove('dragover');
+  drop.ondrop=e=>{e.preventDefault();drop.classList.remove('dragover');if(e.dataTransfer.files[0])parseSopFile(e.dataTransfer.files[0])};
+  $('#sopText').oninput=e=>{State.sopSourceText=e.target.value};
+  $('#sopClearBtn').onclick=()=>{State.sopSourceText='';State.sopOutputMd='';$('#sopText').value='';renderMain()};
+  $('#sopLocalBtn').onclick=()=>generateSopLocal();
+  if($('#sopAIBtn'))$('#sopAIBtn').onclick=()=>generateSopAI();
+  $('#sopSaveBtn').onclick=saveSop;
+  $('#sopExportBtn').onclick=exportSop;
+  $('#sopPrintBtn').onclick=()=>{const w=window.open('','_blank');w.document.write('<html><head><title>SOP</title><style>body{font-family:sans-serif;padding:40px;line-height:1.7}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:6px}pre{background:#f6f8fa;padding:8px;overflow-x:auto}</style></head><body>'+$('#sopOutput').innerHTML+'</body></html>');w.document.close();w.print()};
+  $('#sopHistoryBtn').onclick=showSopHistory;
+  // 移动端 SOP tab 切换
+  $$('#sopMobileTabs .sop-mobile-tab').forEach(t=>t.onclick=()=>{
+    $$('#sopMobileTabs .sop-mobile-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const pane=t.dataset.pane;
+    const inp=$('#sopPaneInput'),out=$('#sopPaneOutput');
+    if(inp)inp.classList.toggle('mobile-active',pane==='input');
+    if(out)out.classList.toggle('mobile-active',pane==='output');
+  });
+}
+function sopSwitchToOutput(){
+  const tab=$('#sopMobileTabs .sop-mobile-tab[data-pane="output"]');
+  if(tab&&window.innerWidth<=768)tab.click();
+}
+
+async function parseSopFile(file){
+  if(file.size>20*1024*1024){toast('文件超过20MB限制','error');return}
+  const ext=file.name.split('.').pop().toLowerCase();
+  toast('正在解析文件...','info',4000);
+  try{
+    let text='';
+    if(ext==='pdf'){
+      const ab=await file.arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+      for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const vc=await page.getTextContent();text+=vc.items.map(it=>it.str).join(' ')+'\n\n'}
+    }else if(ext==='docx'){
+      const ab=await file.arrayBuffer();
+      const result=await mammoth.extractRawText({arrayBuffer:ab});
+      text=result.value;
+    }else if(['md','txt','csv','markdown'].includes(ext)){
+      text=await file.text();
+    }else{
+      toast('不支持的文件类型：'+ext,'error');return;
+    }
+    State.sopSourceText=text;
+    $('#sopText').value=text;
+    toast(`已解析 ${file.name}（${text.length}字符）`,'success');
+  }catch(e){toast('解析失败：'+e.message,'error',5000)}
+}
+
+function generateSopLocal(){
+  const text=State.sopSourceText||$('#sopText').value;
+  if(!text.trim()){toast('请先输入或上传文本','warn');return}
+  // 本地规则：识别标题、步骤、注意事项、参考
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const title=lines.find(l=>/^#{1,3}\s/.test(l))?.replace(/^#+\s/,'')||lines[0].slice(0,40);
+  // 步骤识别：含数字开头、"步骤"、"第x步"
+  const steps=[];const notes=[];const refs=[];
+  let cur=null;
+  lines.forEach(l=>{
+    if(/^(\d+[.、)]|步骤|第.?[一二三四五六七八九十\d]+步|step\s*\d)/i.test(l)){steps.push(l.replace(/^(\d+[.、)]|步骤|第.?[一二三四五六七八九十\d]+步|step\s*\d[:：.\s]*)/i,'').trim())}
+    else if(/(注意|警告|小心|caution|warning|注意：)/i.test(l)){notes.push(l.replace(/^(注意|警告|小心|caution|warning|注意：)[:：]?\s*/i,'').trim())}
+    else if(/(参考|引用|参见|reference|ref[:：])/i.test(l)){refs.push(l.replace(/^(参考|引用|参见|reference|ref)[:：]?\s*/i,'').trim())}
+  });
+  // 若未识别到步骤，按段落拆分
+  let finalSteps=steps;
+  if(finalSteps.length===0){finalSteps=text.split(/\n\s*\n/).map(p=>p.trim()).filter(p=>p.length>5).slice(0,12)}
+  const md=buildSopMarkdown({
+    title:title||'工作流程SOP',
+    purpose:`本SOP基于输入资料整理，规范${title||'该'}工作的操作流程，确保操作一致性与质量。`,
+    scope:'适用于服务器硬件电路相关工程操作。',
+    tools:'（根据资料补充：示波器、万用表、焊接工具、相关治具等）',
+    steps:finalSteps,
+    checks:'（根据资料补充：每步完成后的质量检查点）',
+    notes:notes.length?notes:['（根据资料补充：操作注意事项）'],
+    refs:refs.length?refs:[],
+    source:'本地规则整理',
+  });
+  State.sopOutputMd=md;
+  $('#sopOutput').innerHTML=marked.parse(md);
+  toast('已整理为SOP（本地规则模式）','success');
+  sopSwitchToOutput();
+}
+
+async function generateSopAI(){
+  if(!LLM.isAvailable()){toast('请先在设置中启用LLM','warn');return}
+  const text=State.sopSourceText||$('#sopText').value;
+  if(!text.trim()){toast('请先输入或上传文本','warn');return}
+  toast('AI正在整理SOP，请稍候...','info',8000);
+  try{
+    const sys=`你是服务器硬件电路工程领域的SOP编写专家。请将用户提供的资料整理为标准作业流程(SOP)。
+输出严格的Markdown格式，包含以下章节（缺信息处留"（资料未提及，建议补充）"）：
+# {SOP标题}
+## 目的
+## 适用范围
+## 工具与材料
+## 操作步骤
+（用有序列表，每步清晰可执行）
+## 质量检查点
+## 注意事项
+## 参考文档
+保持专业、简洁、可操作。步骤要具体到可执行层面。`;
+    const resp=await LLM.chat([{role:'system',content:sys},{role:'user',content:'请整理以下资料为SOP：\n\n'+text.slice(0,8000)}],{maxTokens:3000});
+    State.sopOutputMd=resp;
+    $('#sopOutput').innerHTML=marked.parse(resp);
+    toast('AI已整理完成','success');
+    sopSwitchToOutput();
+  }catch(e){toast('整理失败：'+e.message,'error',5000)}
+}
+
+function buildSopMarkdown(o){
+  let md=`# ${o.title}\n\n`;
+  md+=`> 版本：v1.0 ｜ 整理日期：${fmtDate(Date.now())} ｜ 来源：${o.source}\n\n`;
+  md+=`## 目的\n${o.purpose}\n\n`;
+  md+=`## 适用范围\n${o.scope}\n\n`;
+  md+=`## 工具与材料\n${o.tools}\n\n`;
+  md+=`## 操作步骤\n`;
+  if(o.steps.length){o.steps.forEach((s,i)=>{md+=`${i+1}. ${s}\n`})}
+  else{md+='（资料未提及，建议补充）\n'}
+  md+='\n## 质量检查点\n'+o.checks+'\n\n';
+  md+='## 注意事项\n';
+  if(o.notes.length){o.notes.forEach(n=>{md+=`- ${n}\n`})}
+  else{md+='（资料未提及，建议补充）\n'}
+  if(o.refs.length){md+='\n## 参考文档\n';o.refs.forEach(r=>{md+=`- ${r}\n`})}
+  return md;
+}
+
+async function saveSop(){
+  if(!State.sopOutputMd){toast('暂无SOP内容','warn');return}
+  const sop={id:uid(),title:(State.sopOutputMd.match(/^#\s+(.+)$/m)||[])[1]||'未命名SOP',content:State.sopOutputMd,createdAt:Date.now()};
+  await DB.put('sops',sop);
+  State.sops.push(sop);
+  toast('SOP已保存到历史','success');
+}
+
+async function exportSop(){
+  if(!State.sopOutputMd){toast('暂无SOP内容','warn');return}
+  const title=(State.sopOutputMd.match(/^#\s+(.+)$/m)||[])[1]||'SOP';
+  const blob=new Blob([State.sopOutputMd],{type:'text/markdown'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${title}_${todayStr()}.md`;a.click();
+  toast('已导出','success');
+}
+
+async function showSopHistory(){
+  if(State.sops.length===0){toast('暂无历史SOP','warn');return}
+  const mask=document.createElement('div');mask.className='modal-mask';
+  mask.innerHTML=`<div class="modal" style="max-width:560px;max-height:80vh"><div class="modal-header"><h3 style="font-size:15px">历史SOP（${State.sops.length}）</h3></div>
+    <div class="modal-body" style="padding:12px">
+      ${State.sops.sort((a,b)=>b.createdAt-a.createdAt).map(s=>`<div class="sop-history-item" data-id="${s.id}"><div><div style="font-weight:500">${escapeHtml(s.title)}</div><div style="font-size:11px;color:var(--text-3)">${fmtDateTime(s.createdAt)}</div></div><div style="display:flex;gap:4px"><button class="icon-btn" data-act="load" data-id="${s.id}" title="载入">${svg(ICONS.refresh,13)}</button><button class="icon-btn" data-act="del" data-id="${s.id}" title="删除" style="color:var(--danger)">${svg(ICONS.trash,13)}</button></div></div>`).join('')}
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" data-act="close">关闭</button></div></div>`;
+  document.body.appendChild(mask);
+  mask.addEventListener('click',async e=>{
+    if(e.target===mask||e.target.dataset.act==='close'){mask.remove();return}
+    const id=e.target.dataset.id||e.target.closest('[data-id]')?.dataset.id;
+    if(!id)return;
+    const act=e.target.dataset.act;
+    if(act==='load'){const s=State.sops.find(x=>x.id===id);if(s){State.sopOutputMd=s.content;mask.remove();renderMain();toast('已载入','success')}}
+    else if(act==='del'){await DB.del('sops',id);State.sops=State.sops.filter(x=>x.id!==id);mask.remove();toast('已删除','success');showSopHistory()}
+  });
+}
+
+/* ========================================================================
+ * 设置模块
+ * ====================================================================== */
+async function renderSettings(main){
+  const cfg=Config.data;
+  main.innerHTML=`
+    <div class="content">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+        <div style="width:36px;height:36px;border-radius:8px;background:#f3f4f6;color:var(--text-2);display:flex;align-items:center;justify-content:center">${svg(ICONS.settings,18)}</div>
+        <div><h2 style="font-size:18px;font-weight:800;letter-spacing:-.3px">⚙️ 设置</h2><div style="font-size:12px;color:var(--text-3)">LLM配置 · 数据备份 · 分类管理</div></div>
+      </div>
+
+      <div class="settings-section">
+        <h3>📛 工作台名称</h3>
+        <div class="desc">自定义你的工作台名称，顶栏标题和页面标签页都会同步更新。每个工程师都可以改成自己的专属命名。</div>
+        <div class="field">
+          <label>工作台名称</label>
+          <input class="input" id="workbenchName" value="${escapeAttr(cfg.workbenchName||'工程师工作台')}" placeholder="例如：电源工程师工作台 / SI分析台 / 我的调试笔记" maxlength="20">
+          <div class="hint">最多 20 个字。保存后顶栏和浏览器标签页立即生效。</div>
+        </div>
+        <button class="btn btn-primary" id="saveNameBtn">💾 保存名称</button>
+      </div>
+
+      <div class="settings-section">
+        <h3>⚡ LLM 智能增强</h3>
+        <div class="desc">配置OpenAI兼容接口，启用后知识库AI摘要、SOP智能整理将可用。数据直接从浏览器发送至你配置的接口，不经过中转。</div>
+        <div class="field">
+          <label>启用LLM</label>
+          <label class="switch"><input type="checkbox" id="llmEnabled" ${cfg.llmEnabled?'checked':''}><span class="slider"></span></label>
+        </div>
+        <div class="field">
+          <label>API Base URL</label>
+          <input class="input" id="baseUrl" value="${escapeAttr(cfg.baseUrl)}" placeholder="https://api.openai.com 或自建代理地址">
+          <div class="hint">将自动追加 /v1/chat/completions。若URL已含完整路径则直接使用。</div>
+        </div>
+        <div class="field">
+          <label>API Key</label>
+          <input class="input" id="apiKey" type="password" value="${escapeAttr(cfg.apiKey)}" placeholder="sk-...">
+          <div class="hint" style="color:var(--warn)">⚠ 密钥明文存储于浏览器本地，请勿在公共设备使用。</div>
+        </div>
+        <div class="field">
+          <label>模型名称</label>
+          <input class="input" id="model" value="${escapeAttr(cfg.model)}" placeholder="gpt-4o-mini">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" id="saveLlmBtn">💾 保存配置</button>
+          <button class="btn btn-ghost" id="testLlmBtn">⚡ 测试连接</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>💾 数据备份与恢复</h3>
+        <div class="desc">所有数据存储于浏览器本地IndexedDB。建议定期导出备份。</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="exportBtn">⬇️ 导出全部数据</button>
+          <button class="btn btn-ghost" id="importBtn">⬆️ 导入数据</button>
+          <input type="file" id="importFile" accept=".json" style="display:none">
+          <button class="btn btn-danger" id="clearBtn">🗑️ 清空所有数据</button>
+        </div>
+        <div class="hint" style="margin-top:8px">当前数据：项目 ${State.projects.length} · 任务 ${State.todos.length} · 知识 ${State.knowledge.length} · 电路 ${State.circuits.length} · Bug ${State.bugs.length} · SOP ${State.sops.length}</div>
+      </div>
+
+      <div class="settings-section">
+        <h3>🔄 应用更新</h3>
+        <div class="desc">已安装为桌面/手机应用时，点此检查并获取最新版本。每次打开应用也会自动检查。</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary" id="checkUpdateBtn">🔄 检查更新</button>
+          <span class="hint" id="updateStatus" style="font-size:12px">当前版本：v${CACHE_VERSION}</span>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <h3>🏷️ 知识分类体系</h3>
+          <button class="btn btn-primary btn-sm" id="addCatSettingsBtn">${svg(ICONS.plus,13)} 新建分类</button>
+        </div>
+        <div class="desc">内置分类为电路工程领域基础分类（可编辑关键词，不可删除）；自定义分类可自由增删改。手动改分类时系统会学习优化。</div>
+        <div class="kw-editor">
+          ${CATEGORIES.map(c=>`<div class="kw-cat">
+            <div class="kw-cat-head">
+              <span class="dot" style="background:${c.color}"></span>${c.emoji} ${escapeHtml(c.name)}
+              ${c.builtin?`<span class="badge" style="background:var(--info-soft);color:var(--info);margin-left:4px">内置</span>`:`<span class="badge" style="background:var(--purple-soft);color:var(--purple);margin-left:4px">自定义</span>`}
+              <span style="color:var(--text-3);font-weight:400">· ${(c.keywords||[]).length}个关键词</span>
+              <span style="margin-left:auto;display:flex;gap:2px">
+                <button class="icon-btn" data-cat-edit="${c.id}" title="编辑" style="width:26px;height:26px">${svg(ICONS.edit,12)}</button>
+                ${!c.builtin&&c.id!=='other'?`<button class="icon-btn" data-cat-del="${c.id}" title="删除" style="width:26px;height:26px;color:var(--danger)">${svg(ICONS.trash,12)}</button>`:''}
+              </span>
+            </div>
+            <div style="font-size:11px;color:var(--text-3);line-height:1.6">${(c.keywords||[]).slice(0,20).map(k=>`<span class="tag">${escapeHtml(k)}</span>`).join('')}${(c.keywords||[]).length>20?`<span class="tag">+${c.keywords.length-20}</span>`:''}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>🔌 典型电路分类</h3>
+        <div class="desc">电路模块预设分类，上传电路文件时自动归类。</div>
+        <div class="kw-editor">
+          ${CIRCUIT_CATEGORIES.filter(c=>c.id!=='cother').map(c=>`<div class="kw-cat">
+            <div class="kw-cat-head"><span class="dot" style="background:${c.color}"></span>${c.emoji} ${c.name} <span style="color:var(--text-3);font-weight:400">· ${c.keywords.length}个关键词</span></div>
+            <div style="font-size:11px;color:var(--text-3);line-height:1.6">${c.keywords.slice(0,16).map(k=>`<span class="tag">${escapeHtml(k)}</span>`).join('')}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>🐛 Bug 分类体系</h3>
+        <div class="desc">Bug汇总模块使用，按类型+严重程度双维度分类。</div>
+        <div style="margin-bottom:10px;font-size:12px;font-weight:700;color:var(--text-2)">按类型</div>
+        <div class="kw-editor">
+          ${BUG_CATEGORIES.filter(c=>c.id!=='bother').map(c=>`<div class="kw-cat">
+            <div class="kw-cat-head"><span class="dot" style="background:${c.color}"></span>${c.emoji} ${c.name} <span style="color:var(--text-3);font-weight:400">· ${c.keywords.length}个关键词</span></div>
+            <div style="font-size:11px;color:var(--text-3);line-height:1.6">${c.keywords.slice(0,16).map(k=>`<span class="tag">${escapeHtml(k)}</span>`).join('')}</div>
+          </div>`).join('')}
+        </div>
+        <div style="margin:14px 0 10px;font-size:12px;font-weight:700;color:var(--text-2)">按严重程度</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${SEVERITIES.map(s=>`<span class="badge" style="background:${s.color}20;color:${s.color};padding:6px 12px;font-size:12px">${s.emoji} ${s.name}</span>`).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  $('#saveNameBtn').onclick=async()=>{
+    const name=$('#workbenchName').value.trim()||'工程师工作台';
+    Config.data.workbenchName=name;
+    await Config.save();
+    document.title='🔌 '+name;
+    applyDynamicManifest();
+    renderTopbar();renderMain();
+    toast('名称已更新！如果已安装应用，需卸载重装才能让桌面图标名生效','success',5000);
+  };
+  $('#saveLlmBtn').onclick=async()=>{
+    Config.data.llmEnabled=$('#llmEnabled').checked;
+    Config.data.baseUrl=$('#baseUrl').value.trim();
+    Config.data.apiKey=$('#apiKey').value.trim();
+    Config.data.model=$('#model').value.trim()||'gpt-4o-mini';
+    await Config.save();
+    toast('配置已保存','success');
+    renderTopbar();renderMain();
+  };
+  $('#testLlmBtn').onclick=async()=>{
+    const btn=$('#testLlmBtn');const old=btn.innerHTML;btn.innerHTML='<span class="spinner"></span>测试中';btn.disabled=true;
+    Config.data.llmEnabled=true;Config.data.baseUrl=$('#baseUrl').value.trim();Config.data.apiKey=$('#apiKey').value.trim();Config.data.model=$('#model').value.trim();
+    await Config.save();
+    try{
+      const r=await LLM.chat([{role:'user',content:'回复"OK"两个字'}],{maxTokens:10});
+      toast('连接成功：'+r.slice(0,30),'success');
+    }catch(e){toast('连接失败：'+e.message,'error',5000)}
+    btn.innerHTML=old;btn.disabled=false;
+  };
+  $('#exportBtn').onclick=exportAllData;
+  $('#importBtn').onclick=()=>$('#importFile').click();
+  $('#importFile').onchange=importAllData;
+  $('#clearBtn').onclick=clearAllData;
+  // 检查更新
+  $('#checkUpdateBtn').onclick=async()=>{
+    const btn=$('#checkUpdateBtn');const status=$('#updateStatus');
+    const old=btn.innerHTML;btn.innerHTML='<span class="spinner"></span>检查中';btn.disabled=true;
+    status.textContent='正在检查...';
+    try{
+      if(!('serviceWorker' in navigator)){throw new Error('当前浏览器不支持Service Worker')}
+      // 强制重新注册 SW，触发更新检测
+      const reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
+      await reg.update();
+      // 等待 2 秒看是否有新 SW
+      await new Promise(r=>setTimeout(r,2000));
+      const waiting=reg.waiting;
+      const active=reg.active;
+      if(waiting){
+        // 有新版本等待激活，通知它 skipWaiting
+        waiting.postMessage({type:'SKIP_WAITING'});
+        status.textContent='发现新版本，正在更新...';
+        toast('发现新版本，正在更新...','success',3000);
+      }else if(active){
+        // 对比版本：fetch 当前页面的 ETag 或内容判断是否更新
+        const resp=await fetch('./index_pwa.html?_t='+Date.now(),{cache:'no-store'});
+        const html=await resp.text();
+        const verMatch=html.match(/CACHE_VERSION='([^']+)'/);
+        const serverVer=verMatch?verMatch[1]:'unknown';
+        if(serverVer===CACHE_VERSION){
+          status.textContent='当前已是最新版：v'+CACHE_VERSION;
+          toast('当前已是最新版 ✓','success');
+        }else{
+          status.textContent='发现新版本 v'+serverVer+'，刷新页面即可生效';
+          toast('发现新版本，刷新页面即可生效','info',4000);
+        }
+      }
+    }catch(e){
+      status.textContent='检查失败：'+e.message;
+      toast('检查更新失败：'+e.message,'error',4000);
+    }
+    btn.innerHTML=old;btn.disabled=false;
+  };
+  const addCatSettingsBtn=$('#addCatSettingsBtn');
+  if(addCatSettingsBtn)addCatSettingsBtn.onclick=addKnowledgeCategory;
+  $$('[data-cat-edit]').forEach(b=>b.onclick=()=>editKnowledgeCategory(b.dataset.catEdit));
+  $$('[data-cat-del]').forEach(b=>b.onclick=()=>deleteKnowledgeCategory(b.dataset.catDel));
+}
+
+async function exportAllData(){
+  const customCats=await DB.getMeta('customCategories');
+  const builtinOverrides=await DB.getMeta('builtinCategoryOverrides');
+  const data={version:2,exportedAt:new Date().toISOString(),projects:State.projects,todos:State.todos,knowledge:State.knowledge,sops:State.sops,circuits:State.circuits,bugs:State.bugs,customCategories:customCats||[],builtinCategoryOverrides:builtinOverrides||{},config:Config.data};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`工作台备份_${todayStr()}.json`;a.click();
+  toast('已导出','success');
+}
+async function importAllData(e){
+  const file=e.target.files[0];if(!file)return;
+  if(!await confirmBox('导入将覆盖现有所有数据，确定继续？',{danger:true}))return;
+  try{
+    const text=await file.text();const data=JSON.parse(text);
+    await DB.clear('projects');await DB.clear('todos');await DB.clear('knowledge');await DB.clear('sops');await DB.clear('circuits');await DB.clear('bugs');
+    for(const p of(data.projects||[]))await DB.put('projects',p);
+    for(const t of(data.todos||[]))await DB.put('todos',t);
+    for(const k of(data.knowledge||[]))await DB.put('knowledge',k);
+    for(const s of(data.sops||[]))await DB.put('sops',s);
+    for(const c of(data.circuits||[]))await DB.put('circuits',c);
+    for(const b of(data.bugs||[]))await DB.put('bugs',b);
+    if(data.customCategories)await DB.setMeta('customCategories',data.customCategories);
+    if(data.builtinCategoryOverrides)await DB.setMeta('builtinCategoryOverrides',data.builtinCategoryOverrides);
+    if(data.config){Config.data=Object.assign({},Config.defaults,data.config);await Config.save()}
+    await CategoryStore.reloadWithOverrides();
+    await loadData();
+    toast('导入成功','success');
+    renderTopbar();renderMain();
+  }catch(e){toast('导入失败：'+e.message,'error',5000)}
+}
+async function clearAllData(){
+  if(!await confirmBox('将清空所有项目、任务、知识、电路、Bug、SOP数据，此操作不可恢复！',{danger:true,yesText:'确认清空'}))return;
+  await DB.clear('projects');await DB.clear('todos');await DB.clear('knowledge');await DB.clear('sops');await DB.clear('circuits');await DB.clear('bugs');
+  await loadData();
+  toast('已清空','success');
+  renderTopbar();renderMain();
+}
+
+/* ----------------------- 初始化 ----------------------- */
+async function loadData(){
+  State.projects=await DB.all('projects');
+  State.todos=await DB.all('todos');
+  State.knowledge=await DB.all('knowledge');
+  State.sops=await DB.all('sops');
+  State.circuits=await DB.all('circuits');
+  State.bugs=await DB.all('bugs');
+  State.currentProjectId=State.currentProjectId||(State.projects[0]?.id||'today');
+}
+
+async function init(){
+  // 配置pdf.js worker
+  if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  // 配置marked
+  if(window.marked)marked.setOptions({breaks:true,gfm:true});
+  await DB.init();
+  await Config.load();
+  await CategoryStore.reloadWithOverrides();
+  await loadData();
+  // 应用自定义工作台名称：顶栏 + 标签页 + 动态manifest（安装应用名）
+  const wbName=Config.get('workbenchName')||'工程师工作台';
+  document.title='🔌 '+wbName;
+  applyDynamicManifest();
+  renderTopbar();
+  renderMain();
+  // 首次使用提示
+  if(State.projects.length===0&&State.todos.length===0&&State.knowledge.length===0&&State.sops.length===0&&State.circuits.length===0&&State.bugs.length===0){
+    setTimeout(()=>toast(`欢迎使用${wbName}！先在「待办清单」创建项目，或在「知识库」记录第一条知识。`,'info',6000),300);
+  }
+  // Service Worker 更新检测：打开应用时自动检查，有新版则提示刷新
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      // SW 已切换为新版，提示用户刷新
+      toast('应用已更新到最新版，即将刷新...','success',3000);
+      setTimeout(()=>location.reload(),1500);
+    });
+    // 监听 SW 发来的更新消息
+    navigator.serviceWorker.addEventListener('message',e=>{
+      if(e.data&&e.data.type==='SW_UPDATED'){
+        toast('检测到新版本，已自动加载，刷新页面即可生效','info',5000);
+      }
+    });
+  }
+  // PWA 安装引导：监听 beforeinstallprompt，显示安装按钮
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // 显示一个浮动安装按钮
+    const fab = document.createElement('div');
+    fab.id = 'pwaInstallFab';
+    fab.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9998;background:linear-gradient(135deg,#ef4444,#a855f7);color:#fff;padding:12px 20px;border-radius:30px;box-shadow:0 8px 24px rgba(239,68,68,.4);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:sans-serif;animation:fadeIn .3s';
+    fab.innerHTML = '📲 安装到主屏幕';
+    fab.onclick = async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const {outcome} = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') toast('已添加到主屏幕 ✨','success');
+        deferredPrompt = null;
+        fab.remove();
+      }
+    };
+    document.body.appendChild(fab);
+    toast('点击右下角按钮可安装到主屏幕 📲','info',5000);
+  });
+}
+
+document.addEventListener('DOMContentLoaded',init);
+// 注册 Service Worker（PWA 安装必需）
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg=>console.log('SW 注册成功:',reg.scope))
+      .catch(err=>console.warn('SW 注册失败:',err));
+  });
+}
+</script>
+</body>
+</html>
