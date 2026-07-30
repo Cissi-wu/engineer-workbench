@@ -2,7 +2,8 @@
 // 网络优先策略：保证已安装的 PWA 应用总能拿到最新版
 const CACHE_NAME = 'engineer-workbench-v2';
 const CORE_ASSETS = [
-  './index_pwa.html',
+  './',
+  './index.html',
   './manifest.json',
   './sw.js',
   './assets/icon-192.png',
@@ -53,7 +54,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME).then(cache => cache.put(req, clone)).catch(() => {});
         }
         return resp;
-      }).catch(() => caches.match(req).then(c => c || caches.match('./index_pwa.html')))
+      }).catch(() => caches.match(req).then(c => c || caches.match('./index.html')))
     );
     return;
   }
@@ -78,7 +79,7 @@ self.addEventListener('fetch', event => {
         }
         return resp;
       }).catch(() => {
-        if (req.destination === 'document') return caches.match('./index_pwa.html');
+        if (req.destination === 'document') return caches.match('./index.html');
       });
     })
   );

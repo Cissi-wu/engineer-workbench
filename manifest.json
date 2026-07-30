@@ -2,7 +2,7 @@
   "name": "工程师工作台",
   "short_name": "工程师工作台",
   "description": "服务器硬件电路工程师的个人工作台",
-  "start_url": "./index_pwa.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
