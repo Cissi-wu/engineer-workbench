@@ -396,6 +396,50 @@ a{color:var(--primary);text-decoration:none}
   .content{padding:12px 10px}
   .todo-item{padding:10px}
 }
+
+/* ============ 富文本编辑器 ============ */
+.rich-editor{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;background:#fff;transition:border-color .15s}
+.rich-editor:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.rich-toolbar{display:flex;align-items:center;gap:3px;flex-wrap:wrap;padding:6px 8px;background:#f8fafc;border-bottom:1px solid var(--border)}
+.rich-toolbar button,.rich-toolbar select,.rich-toolbar input[type="color"]{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:13px;cursor:pointer;transition:all .12s;padding:0 5px;font-weight:600}
+.rich-toolbar button:hover{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.rich-toolbar select{font-size:11px;padding:0 4px;font-weight:500}
+.rich-toolbar input[type="color"]{width:32px;padding:2px;cursor:pointer}
+.rich-toolbar .tb-sep{width:1px;height:20px;background:var(--border);margin:0 3px;flex-shrink:0}
+.rich-editor-area{padding:10px 12px;min-height:80px;max-height:500px;overflow-y:auto;font-size:13px;line-height:1.6;outline:none;word-break:break-word}
+.rich-editor-area:empty::before{content:attr(data-placeholder);color:var(--text-3);pointer-events:none}
+.rich-editor-area img{max-width:100%;height:auto;border-radius:6px;margin:4px 0}
+.rich-editor-area table{border-collapse:collapse;width:100%;margin:6px 0;font-size:12px}
+.rich-editor-area th,.rich-editor-area td{border:1px solid var(--border-strong);padding:5px 8px;min-width:50px}
+.rich-editor-area th{background:#f6f8fa;font-weight:600}
+.rich-editor-area ul,.rich-editor-area ol{padding-left:22px;margin:4px 0}
+.rich-editor-area h1{font-size:18px;margin:8px 0 4px}
+.rich-editor-area h2{font-size:15px;margin:6px 0 3px}
+.rich-editor-area h3{font-size:14px;margin:4px 0 2px}
+.rich-editor-area a{color:var(--primary);text-decoration:underline}
+.rich-editor-area blockquote{border-left:3px solid var(--warn);background:var(--warn-soft);padding:6px 12px;margin:6px 0;border-radius:0 6px 6px 0}
+/* 富文本内容展示 */
+.rich-content{font-size:13px;color:var(--text);line-height:1.65;word-break:break-word;overflow:hidden}
+.rich-content img{max-width:100%;height:auto;border-radius:6px;margin:4px 0}
+.rich-content table{border-collapse:collapse;width:100%;margin:6px 0;font-size:12px}
+.rich-content th,.rich-content td{border:1px solid var(--border-strong);padding:5px 8px}
+.rich-content th{background:#f6f8fa;font-weight:600}
+.rich-content ul,.rich-content ol{padding-left:22px;margin:4px 0}
+.rich-content h1,.rich-content h2,.rich-content h3{margin:6px 0 3px}
+.rich-content a{color:var(--primary)}
+.rich-content blockquote{border-left:3px solid var(--warn);background:var(--warn-soft);padding:6px 12px;margin:6px 0;border-radius:0 6px 6px 0}
+/* 富文本编辑器在弹窗中 */
+.modal .rich-editor-area{max-height:300px}
+/* SOP 可编辑输出区 */
+.sop-output[contenteditable="true"]{outline:2px solid var(--info);outline-offset:-2px;border-radius:8px}
+.sop-output[contenteditable="true"]:focus{outline-color:var(--primary)}
+/* 移动端富文本编辑器适配 */
+@media (max-width:768px){
+  .rich-toolbar{gap:1px;padding:4px 6px}
+  .rich-toolbar button,.rich-toolbar select,.rich-toolbar input[type="color"]{min-width:30px;height:32px;font-size:14px}
+  .rich-editor-area{min-height:100px;font-size:14px;padding:10px}
+  .rich-toolbar .tb-sep{display:none}
+}
 </style>
 </head>
 <body>
@@ -416,6 +460,7 @@ const todayStr = ()=>{const d=new Date();return fmtDate(d)};
 const daysBetween = (dueDate,today)=>{const p=s=>s.split('-').map(Number);const da=new Date(p(dueDate)[0],p(dueDate)[1]-1,p(dueDate)[2]);const db=new Date(p(today)[0],p(today)[1]-1,p(today)[2]);return Math.round((da-db)/86400000)};
 const escapeHtml = (s)=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const escapeAttr = (s)=>escapeHtml(s);
+const stripHtml = (html)=>{if(!html)return '';const tmp=document.createElement('div');tmp.innerHTML=html;return tmp.textContent||tmp.innerText||''};
 function toast(msg,type='info',ms=2600){
   const emojiMap={success:'✅',error:'❌',warn:'⚠️',info:'💡'};
   const el=document.createElement('div');el.className='toast '+type;el.textContent=(emojiMap[type]||'')+' '+msg;
@@ -502,6 +547,199 @@ const ICONS={
   chevron:'<polyline points="9 18 15 12 9 6"/>',
 };
 
+/* ----------------------- 富文本编辑器组件 ----------------------- */
+/**
+ * 创建富文本编辑器
+ * @param {Object} opts - {placeholder, minHeight, initialContent, compact}
+ * @returns {Object} - {element, getValue, setValue, focus, editor}
+ */
+function createRichEditor(opts={}){
+  const {placeholder='', minHeight=80, initialContent='', compact=false} = opts;
+  const wrapper=document.createElement('div');
+  wrapper.className='rich-editor';
+  const toolbar=document.createElement('div');
+  toolbar.className='rich-toolbar';
+  toolbar.innerHTML=`${compact?'':`
+    <button type="button" data-cmd="formatBlock" data-val="h2" title="标题" style="font-weight:800">H</button>
+    <button type="button" data-cmd="formatBlock" data-val="h3" title="小标题" style="font-size:11px;font-weight:800">H</button>
+    <span class="tb-sep"></span>`}
+    <button type="button" data-cmd="bold" title="加粗" style="font-weight:800">B</button>
+    <button type="button" data-cmd="italic" title="斜体" style="font-style:italic">I</button>
+    <button type="button" data-cmd="underline" title="下划线" style="text-decoration:underline">U</button>
+    <button type="button" data-cmd="strikeThrough" title="删除线" style="text-decoration:line-through">S</button>
+    <span class="tb-sep"></span>
+    <select data-cmd="fontSize" title="字号">
+      <option value="">字号</option>
+      <option value="1">12px</option>
+      <option value="2">14px</option>
+      <option value="3">16px</option>
+      <option value="4">18px</option>
+      <option value="5">24px</option>
+      <option value="6">32px</option>
+    </select>
+    <input type="color" data-cmd="foreColor" title="字体颜色" value="#ef4444">
+    <span class="tb-sep"></span>
+    <button type="button" data-cmd="insertUnorderedList" title="无序列表">•&nbsp;列表</button>
+    <button type="button" data-cmd="insertOrderedList" title="有序列表">1.&nbsp;列表</button>
+    <span class="tb-sep"></span>
+    <button type="button" data-cmd="insertImage" title="插入图片">🖼️</button>
+    <button type="button" data-cmd="insertTable" title="插入表格">📊</button>
+    <button type="button" data-cmd="insertLink" title="插入链接">🔗</button>
+    <span class="tb-sep"></span>
+    <button type="button" data-cmd="removeFormat" title="清除格式">✕</button>`;
+  const editor=document.createElement('div');
+  editor.className='rich-editor-area';
+  editor.contentEditable=true;
+  editor.style.minHeight=minHeight+'px';
+  editor.dataset.placeholder=placeholder;
+  if(initialContent)editor.innerHTML=initialContent;
+
+  // 阻止工具栏按钮失焦
+  toolbar.querySelectorAll('button,select').forEach(btn=>{
+    btn.addEventListener('mousedown',e=>e.preventDefault());
+  });
+
+  // 工具栏事件
+  toolbar.addEventListener('click',async e=>{
+    const btn=e.target.closest('[data-cmd]');if(!btn)return;
+    const cmd=btn.dataset.cmd;
+    const val=btn.dataset.val||null;
+    editor.focus();
+    if(cmd==='insertImage'){
+      const input=document.createElement('input');
+      input.type='file';input.accept='image/*';
+      input.onchange=()=>{
+        const f=input.files[0];if(!f)return;
+        if(f.size>5*1024*1024){toast('图片不能超过5MB','error');return}
+        const reader=new FileReader();
+        reader.onload=()=>{
+          document.execCommand('insertHTML',false,`<img src="${reader.result}" alt="图片">`);
+          editor.focus();
+        };
+        reader.readAsDataURL(f);
+      };
+      input.click();
+    }else if(cmd==='insertTable'){
+      const rows=3,cols=3;
+      let html='<table><tbody>';
+      for(let r=0;r<rows;r++){
+        html+='<tr>';
+        for(let c=0;c<cols;c++){
+          html+=`<td>${r===0&&c===0?'单元格':''}</td>`;
+        }
+        html+='</tr>';
+      }
+      html+='</tbody></table><p><br></p>';
+      document.execCommand('insertHTML',false,html);
+    }else if(cmd==='insertLink'){
+      const url=prompt('请输入链接地址：','https://');
+      if(url)document.execCommand('createLink',false,url);
+    }else if(cmd==='fontSize'){
+      // select 的 change 事件单独处理
+    }else if(cmd==='foreColor'){
+      // color input 的 change 事件单独处理
+    }else{
+      document.execCommand(cmd,false,val);
+    }
+  });
+
+  // 字号下拉
+  const fontSizeSelect=toolbar.querySelector('[data-cmd="fontSize"]');
+  if(fontSizeSelect){
+    fontSizeSelect.onchange=()=>{
+      const v=fontSizeSelect.value;
+      if(v){editor.focus();document.execCommand('fontSize',false,v);fontSizeSelect.value=''}
+    };
+  }
+  // 颜色选择器
+  const colorInput=toolbar.querySelector('[data-cmd="foreColor"]');
+  if(colorInput){
+    colorInput.onchange=()=>{
+      editor.focus();
+      document.execCommand('foreColor',false,colorInput.value);
+    };
+  }
+
+  wrapper.appendChild(toolbar);
+  wrapper.appendChild(editor);
+
+  return {
+    element:wrapper,
+    getValue:()=>editor.innerHTML,
+    setValue:(html)=>{editor.innerHTML=html||''},
+    focus:()=>editor.focus(),
+    editor:editor
+  };
+}
+
+/* 判断内容是否为富文本HTML */
+function isRichContent(content){
+  if(!content)return false;
+  return /<(p|div|br|b|strong|i|em|u|s|strike|span|h[1-6]|ul|ol|li|table|tr|td|th|img|a|blockquote|pre|code|font)\b/i.test(content);
+}
+
+/* 渲染内容（兼容旧纯文本和新富文本） */
+function renderContent(content){
+  if(!content)return '';
+  if(isRichContent(content))return content;
+  return escapeHtml(content).replace(/\n/g,'<br>');
+}
+
+/* 创建富文本编辑弹窗（替代 promptBox 用于富文本编辑） */
+function richPromptBox(title,opts={}){
+  return new Promise(res=>{
+    const mask=document.createElement('div');mask.className='modal-mask';
+    mask.innerHTML=`<div class="modal" style="max-width:640px">
+      <div class="modal-header"><h3 style="font-size:15px">${escapeHtml(title)}</h3></div>
+      <div class="modal-body" id="richPromptBody">
+        ${opts.fields?opts.fields.filter(f=>f.type!=='rich').map(f=>`<div class="field"><label>${escapeHtml(f.label)}</label>${
+          f.type==='select'?
+            `<select class="select" id="pf_${f.id}">${(f.options||[]).map(o=>`<option value="${escapeAttr(o.value||o.id||o)}" ${(f.value===(o.value||o.id||o))?'selected':''}>${escapeHtml(o.label||o.name||o)}</option>`).join('')}</select>`
+          :f.type==='textarea'?
+            `<textarea class="textarea" id="pf_${f.id}" rows="${f.rows||3}">${escapeHtml(f.value||'')}</textarea>`
+          :
+            `<input class="input" id="pf_${f.id}" type="${f.type||'text'}" value="${escapeAttr(f.value||'')}" ${f.placeholder?`placeholder="${escapeAttr(f.placeholder)}"`:''}/>`
+        }${f.hint?`<div class="hint">${escapeHtml(f.hint)}</div>`:''}</div>`).join(''):''}
+        <div class="field" id="richEditorField" style="margin-bottom:0"></div>
+      </div><div class="modal-footer">
+      <button class="btn btn-ghost" data-act="no">取消</button>
+      <button class="btn btn-primary" data-act="yes">确定</button></div></div>`;
+    document.body.appendChild(mask);
+    // 插入富文本编辑器
+    const richField=mask.querySelector('#richEditorField');
+    const richOpts=(opts.fields||[]).find(f=>f.type==='rich');
+    let richEditor=null;
+    if(richOpts){
+      const labelEl=document.createElement('label');
+      labelEl.style.cssText='display:block;font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px';
+      labelEl.textContent=richOpts.label||'内容';
+      richField.appendChild(labelEl);
+      richEditor=createRichEditor({
+        placeholder:richOpts.placeholder||'',
+        minHeight:richOpts.minHeight||200,
+        initialContent:richOpts.value||'',
+        compact:richOpts.compact||false
+      });
+      richField.appendChild(richEditor.element);
+    }
+    const firstInput=mask.querySelector('input:not([type="color"]),textarea');
+    if(firstInput&&!richOpts)firstInput.focus();
+    else if(richOpts)richEditor.focus();
+    mask.addEventListener('click',e=>{
+      if(e.target===mask||e.target.dataset.act==='no'){mask.remove();res(null)}
+      else if(e.target.dataset.act==='yes'){
+        const result={};
+        (opts.fields||[]).filter(f=>f.type!=='rich').forEach(f=>{
+          const el=mask.querySelector('#pf_'+f.id);
+          result[f.id]=el?el.value:'';
+        });
+        if(richOpts)result[richOpts.id]=richEditor.getValue();
+        mask.remove();res(result);
+      }
+    });
+  });
+}
+
 /* ----------------------- 数据层 (IndexedDB) ----------------------- */
 const DB={
   db:null,
@@ -533,7 +771,7 @@ const DB={
 };
 
 /* ----------------------- 应用版本（每次更新递增） ----------------------- */
-const CACHE_VERSION='2.2.0';
+const CACHE_VERSION='3.0.0';
 
 /* ----------------------- 动态 Manifest（让安装后的应用名可自定义） ----------------------- */
 let _manifestBlobUrl=null;
@@ -787,7 +1025,7 @@ const State={
   // knowledge
   knowledge:[],kwCategoryFilter:'all',kwSearch:'',
   // sop
-  sops:[],sopSourceText:'',currentSopId:null,
+  sops:[],sopSourceText:'',sopOutputMd:'',sopOutputHtml:'',currentSopId:null,
   // circuit
   circuits:[],circuitCategoryFilter:'all',circuitSearch:'',
   // bug
@@ -1138,7 +1376,7 @@ async function renderKnowledge(main){
   const content=document.createElement('div');content.className='content';
   let list=State.knowledge.slice();
   if(State.kwCategoryFilter!=='all')list=list.filter(k=>k.category===State.kwCategoryFilter);
-  if(State.kwSearch){const q=State.kwSearch.toLowerCase();list=list.filter(k=>(k.content||'').toLowerCase().includes(q)||(k.summary||'').toLowerCase().includes(q))}
+  if(State.kwSearch){const q=State.kwSearch.toLowerCase();list=list.filter(k=>stripHtml(k.content||'').toLowerCase().includes(q)||(k.summary||'').toLowerCase().includes(q))}
   list.sort((a,b)=>b.createdAt-a.createdAt);
 
   content.innerHTML=`
@@ -1147,9 +1385,9 @@ async function renderKnowledge(main){
       <div style="flex:1"><h2 style="font-size:18px;font-weight:800;letter-spacing:-.3px">📚 知识库</h2><div style="font-size:12px;color:var(--text-3)">${list.length} 条 · 自动分类${LLM.isAvailable()?' · LLM增强已启用':''}</div></div>
     </div>
     <div class="knowledge-input">
-      <textarea id="kwInput" class="textarea" placeholder="💡 快速记录零碎知识点，回车保存（Shift+回车换行）...&#10;例如：DDR4等长要求，地址/命令组内偏差≤25mil，数据组DQ/DQS内偏差≤10mil"></textarea>
+      <div id="kwEditorContainer"></div>
       <div class="knowledge-input-foot">
-        <div style="font-size:11px;color:var(--text-3)">将自动分类，可手动调整</div>
+        <div style="font-size:11px;color:var(--text-3)">支持图片/表格/字体样式 · 自动分类，可手动调整</div>
         <div style="display:flex;gap:6px;align-items:center">
           ${LLM.isAvailable()?`<button class="btn btn-ghost btn-sm" id="kwAISummary" title="保存后用LLM生成摘要">✨ AI摘要</button>`:''}
           <button class="btn btn-primary btn-sm" id="kwSaveBtn">${svg(ICONS.plus,13)}保存知识</button>
@@ -1167,8 +1405,10 @@ async function renderKnowledge(main){
 
   sidebar.querySelectorAll('.sidebar-item').forEach(el=>el.onclick=()=>{State.kwCategoryFilter=el.dataset.cat;renderMain();closeSidebar()});
   const addCatBtn=$('#addCatBtn');if(addCatBtn)addCatBtn.onclick=addKnowledgeCategory;
+  // 挂载富文本编辑器
+  _kwEditor=createRichEditor({placeholder:'💡 快速记录零碎知识点...\n例如：DDR4等长要求，地址/命令组内偏差≤25mil',minHeight:70,compact:true});
+  $('#kwEditorContainer').appendChild(_kwEditor.element);
   $('#kwSaveBtn').onclick=saveKnowledge;
-  $('#kwInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();saveKnowledge()}};
   if($('#kwAISummary'))$('#kwAISummary').onclick=()=>saveKnowledge(true);
   if($('#kwBatchSummary'))$('#kwBatchSummary').onclick=batchSummary;
   if($('#exportKwBtn'))$('#exportKwBtn').onclick=exportKnowledge;
@@ -1186,10 +1426,10 @@ async function renderKnowledge(main){
 function renderKnowledgeCard(k){
   const cat=CAT_MAP[k.category]||CAT_MAP.other;
   const content=k.content||'';
-  const isLong=content.length>300;
+  const isLong=stripHtml(content).length>300;
   const tagsHtml=(k.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('');
   return `<div class="k-card" data-kid="${k.id}">
-    <div class="k-card-content ${isLong?'':'expanded'}">${escapeHtml(content)}${content.includes('```')?'':(content.match(/```[\s\S]*?```/g)?'':'')}</div>
+    <div class="k-card-content rich-content ${isLong?'':'expanded'}">${renderContent(content)}</div>
     ${isLong?`<button class="btn btn-ghost btn-sm" style="margin-top:4px;align-self:flex-start" data-act="expand">展开</button>`:''}
     ${k.summary?`<div class="k-summary-box"><div class="label">${svg(ICONS.sparkles,11)}摘要</div>${escapeHtml(k.summary)}</div>`:''}
     <div class="k-card-foot">
@@ -1208,14 +1448,16 @@ function renderKnowledgeCard(k){
   </div>`;
 }
 
+let _kwEditor=null;
 async function saveKnowledge(useAI=false){
-  const ta=$('#kwInput');const text=ta.value.trim();
+  const html=_kwEditor?_kwEditor.getValue():'';
+  const text=stripHtml(html).trim();
   if(!text){toast('请输入内容','warn');return}
   const result=classifyKnowledge(text);
-  const k={id:uid(),content:text,source:'manual',category:result.cat,tags:[],createdAt:Date.now(),updatedAt:Date.now(),summary:null};
+  const k={id:uid(),content:html,source:'manual',category:result.cat,tags:[],createdAt:Date.now(),updatedAt:Date.now(),summary:null};
   await DB.put('knowledge',k);
   State.knowledge.push(k);
-  ta.value='';
+  if(_kwEditor)_kwEditor.setValue('');
   toast(`已保存，自动归类为「${CAT_MAP[result.cat].name}」${result.uncertain?'（建议确认）':''}`,'success');
   if(useAI&&LLM.isAvailable()){aiSummaryKnowledge(k.id)}
   renderMain();
@@ -1231,7 +1473,7 @@ async function deleteKnowledge(id){
 
 async function editKnowledge(id){
   const k=State.knowledge.find(x=>x.id===id);if(!k)return;
-  const res=await promptBox('编辑知识',{fields:[{id:'content',label:'内容',type:'textarea',rows:6,value:k.content}]});
+  const res=await richPromptBox('编辑知识',{fields:[{id:'content',label:'内容',type:'rich',value:k.content,minHeight:200}]});
   if(res===null)return;
   k.content=res.content;k.updatedAt=Date.now();
   await DB.put('knowledge',k);
@@ -1304,7 +1546,7 @@ async function aiSummaryKnowledge(id){
   toast('正在生成摘要...','info',4000);
   try{
     const sys='你是服务器硬件电路工程领域的知识助手。请用1-2句话精炼总结以下知识点的核心要点，并给出1-3个标签（用逗号分隔）。输出格式：第一行摘要，第二行"标签:tag1,tag2"';
-    const user=k.content;
+    const user=stripHtml(k.content);
     const resp=await LLM.chat([{role:'system',content:sys},{role:'user',content:user}]);
     const lines=resp.trim().split('\n');
     let summary=resp,tags=k.tags||[];
@@ -1326,7 +1568,7 @@ async function batchSummary(){
   toast('正在生成综述...','info',5000);
   try{
     const catName=cat==='all'?'全部':CAT_MAP[cat].name;
-    const content=list.slice(0,30).map((k,i)=>`[${i+1}] ${k.content.slice(0,200)}`).join('\n');
+    const content=list.slice(0,30).map((k,i)=>`[${i+1}] ${stripHtml(k.content).slice(0,200)}`).join('\n');
     const sys=`你是服务器硬件电路工程领域专家。请对以下${catName}类知识点进行综述总结：提炼共性主题、指出关键要点、发现潜在关联。输出300字以内的结构化综述。`;
     const resp=await LLM.chat([{role:'system',content:sys},{role:'user',content:content}]);
     // 存为一条新知识
@@ -1345,7 +1587,7 @@ async function exportKnowledge(){
   CATEGORIES.forEach(c=>{
     const list=byCat[c.id]||[];if(list.length===0)return;
     md+=`## ${c.name}（${list.length}条）\n\n`;
-    list.forEach((k,i)=>{md+=`### ${i+1}. ${k.content.slice(0,40).replace(/\n/g,' ')}${k.content.length>40?'...':''}\n\n${k.content}\n\n${k.summary?`> **摘要**：${k.summary}\n\n`:''}${(k.tags&&k.tags.length)?`标签：${k.tags.join(', ')}\n\n`:''}---\n\n`});
+    list.forEach((k,i)=>{const plainText=stripHtml(k.content);md+=`### ${i+1}. ${plainText.slice(0,40).replace(/\n/g,' ')}${plainText.length>40?'...':''}\n\n${plainText}\n\n${k.summary?`> **摘要**：${k.summary}\n\n`:''}${(k.tags&&k.tags.length)?`标签：${k.tags.join(', ')}\n\n`:''}---\n\n`});
   });
   const blob=new Blob([md],{type:'text/markdown'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`知识库_${todayStr()}.md`;a.click();
@@ -1378,7 +1620,7 @@ async function renderCircuit(main){
   const content=document.createElement('div');content.className='content';
   let list=State.circuits.slice();
   if(State.circuitCategoryFilter!=='all')list=list.filter(c=>c.category===State.circuitCategoryFilter);
-  if(State.circuitSearch){const q=State.circuitSearch.toLowerCase();list=list.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.note||'').toLowerCase().includes(q)||(c.fileName||'').toLowerCase().includes(q)||(c.textContent||'').toLowerCase().includes(q))}
+  if(State.circuitSearch){const q=State.circuitSearch.toLowerCase();list=list.filter(c=>(c.name||'').toLowerCase().includes(q)||stripHtml(c.note||'').toLowerCase().includes(q)||(c.fileName||'').toLowerCase().includes(q)||(c.textContent||'').toLowerCase().includes(q))}
   list.sort((a,b)=>b.createdAt-a.createdAt);
 
   content.innerHTML=`
@@ -1399,7 +1641,7 @@ async function renderCircuit(main){
       </div>
       <div class="field" style="margin-bottom:8px">
         <label>备注（可选，辅助自动分类）</label>
-        <textarea class="textarea" id="circuitNote" rows="2" placeholder="如：12相polyphase，TPS53679主控，耦合电感方案"></textarea>
+        <div id="circuitNoteEditor"></div>
       </div>
       <div style="display:flex;justify-content:flex-end">
         <button class="btn btn-primary btn-sm" id="circuitSaveBtn">${svg(ICONS.plus,13)}保存并自动分类</button>
@@ -1422,6 +1664,9 @@ async function renderCircuit(main){
   drop.ondragleave=()=>drop.classList.remove('dragover');
   drop.ondrop=e=>{e.preventDefault();drop.classList.remove('dragover');if(e.dataTransfer.files[0])handleCircuitFile(e.dataTransfer.files[0])};
   fileInput.onchange=e=>{if(e.target.files[0])handleCircuitFile(e.target.files[0])};
+  // 挂载富文本编辑器
+  _circuitNoteEditor=createRichEditor({placeholder:'如：12相polyphase，TPS53679主控，耦合电感方案',minHeight:60,compact:true});
+  $('#circuitNoteEditor').appendChild(_circuitNoteEditor.element);
   $('#circuitSaveBtn').onclick=saveCircuit;
   if($('#exportCircuitBtn'))$('#exportCircuitBtn').onclick=exportCircuits;
   const ss=$('#circuitSearch');if(ss){let timer;ss.oninput=e=>{clearTimeout(timer);timer=setTimeout(()=>{State.circuitSearch=e.target.value;renderMain();const i=$('#circuitSearch');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},250)}}
@@ -1438,6 +1683,7 @@ async function renderCircuit(main){
 }
 
 let _circuitPending=null;
+let _circuitNoteEditor=null;
 async function handleCircuitFile(file){
   if(file.size>8*1024*1024){toast('文件超过8MB限制','error');return}
   const ext=file.name.split('.').pop().toLowerCase();
@@ -1458,7 +1704,8 @@ async function handleCircuitFile(file){
 async function saveCircuit(){
   if(!_circuitPending||!_circuitPending.file){toast('请先选择文件','warn');return}
   const name=($('#circuitName').value||_circuitPending.name).trim();
-  const note=$('#circuitNote').value.trim();
+  const noteHtml=_circuitNoteEditor?_circuitNoteEditor.getValue():'';
+  const note=stripHtml(noteHtml).trim()?noteHtml:'';
   const p=_circuitPending;
   let fileType,fileData='',textContent='',thumbUrl='';
   try{
@@ -1477,12 +1724,13 @@ async function saveCircuit(){
       toast('不支持的文件类型：'+p.ext,'error');return;
     }
     // 自动分类
-    const classifyInput=[name,note,textContent,p.name].join(' ');
+    const classifyInput=[name,stripHtml(note),textContent,p.name].join(' ');
     const result=classifyCircuit(classifyInput);
     const obj={id:uid(),name,note,category:result.cat,fileType,fileName:p.name,fileData,textContent,thumbUrl,tags:[],createdAt:Date.now(),updatedAt:Date.now()};
     await DB.put('circuits',obj);
     State.circuits.push(obj);
     _circuitPending=null;
+    if(_circuitNoteEditor)_circuitNoteEditor.setValue('');
     toast(`已保存，自动归类为「${CIRCUIT_CAT_MAP[result.cat].name}」${result.uncertain?'（建议确认）':''}`,'success');
     renderMain();
   }catch(e){toast('保存失败：'+e.message,'error',5000)}
@@ -1494,7 +1742,7 @@ function renderCircuitCard(c){
   const preview=isImage?
     `<img class="circuit-thumb" data-act="thumb" data-full="${escapeAttr(c.thumbUrl)}" src="${escapeAttr(c.thumbUrl)}" alt="${escapeAttr(c.name)}">`:
     `<div class="circuit-file-card"><div style="font-size:36px">${c.fileType==='cpm'?'📐':'📄'}</div><div class="fname">${escapeHtml(c.fileName||'')}</div><div style="font-size:10px;color:var(--text-3)">${c.fileType?.toUpperCase()||'TEXT'}</div></div>`;
-  const noteHtml=c.note?`<div style="font-size:12px;color:var(--text-2);margin-top:6px;white-space:pre-wrap;line-height:1.6">${escapeHtml(c.note)}</div>`:'';
+  const noteHtml=c.note?`<div class="rich-content" style="font-size:12px;color:var(--text-2);margin-top:6px;line-height:1.6">${renderContent(c.note)}</div>`:'';
   const textPreview=c.textContent&&!isImage?`<div style="font-size:11px;color:var(--text-3);margin-top:6px;max-height:60px;overflow:hidden;white-space:pre-wrap;font-family:var(--mono);background:var(--bg-solid);padding:6px;border-radius:6px">${escapeHtml(c.textContent.slice(0,300))}${c.textContent.length>300?'...':''}</div>`:'';
   return `<div class="k-card circuit-card" data-cid="${c.id}">
     ${preview}
@@ -1527,9 +1775,9 @@ async function deleteCircuit(id){
 
 async function editCircuit(id){
   const c=State.circuits.find(x=>x.id===id);if(!c)return;
-  const res=await promptBox('编辑电路',{fields:[
+  const res=await richPromptBox('编辑电路',{fields:[
     {id:'name',label:'名称',value:c.name},
-    {id:'note',label:'备注',type:'textarea',rows:3,value:c.note||''},
+    {id:'note',label:'备注',type:'rich',value:c.note||'',minHeight:150},
   ]});
   if(res===null)return;
   c.name=res.name.trim();c.note=res.note;c.updatedAt=Date.now();
@@ -1573,7 +1821,7 @@ async function exportCircuits(){
     md+=`## ${c.emoji} ${c.name}（${list.length}个）\n\n`;
     list.forEach((c,i)=>{
       md+=`### ${i+1}. ${c.name}\n\n`;
-      if(c.note)md+=`> 备注：${c.note}\n\n`;
+      if(c.note)md+=`> 备注：${stripHtml(c.note)}\n\n`;
       if(c.fileName)md+=`- 文件：${c.fileName}（${c.fileType}）\n`;
       md+=`- 添加日期：${fmtDate(c.createdAt)}\n`;
       if(c.textContent){md+=`\n\`\`\`\n${c.textContent.slice(0,500)}${c.textContent.length>500?'\n...':''}\n\`\`\`\n`}
@@ -1622,7 +1870,7 @@ async function renderBug(main){
   let list=State.bugs.slice();
   if(State.bugCategoryFilter!=='all')list=list.filter(b=>b.category===State.bugCategoryFilter);
   if(State.bugSeverityFilter!=='all')list=list.filter(b=>b.severity===State.bugSeverityFilter);
-  if(State.bugSearch){const q=State.bugSearch.toLowerCase();list=list.filter(b=>(b.title||'').toLowerCase().includes(q)||(b.content||'').toLowerCase().includes(q))}
+  if(State.bugSearch){const q=State.bugSearch.toLowerCase();list=list.filter(b=>(b.title||'').toLowerCase().includes(q)||stripHtml(b.content||'').toLowerCase().includes(q))}
   list.sort((a,b)=>b.createdAt-a.createdAt);
 
   // 统计
@@ -1647,7 +1895,7 @@ async function renderBug(main){
       </div>
       <div class="field" style="margin-bottom:8px">
         <label>详细描述（症状/复现/分析/结论）</label>
-        <textarea class="textarea" id="bugContent" rows="4" placeholder="详细描述问题现象、复现条件、排查过程、根因和解决方案...&#10;例如：高温75℃下，DDR4通道DQ0-DQ7眼图高度不足200mV，偶发位错误导致系统蓝屏。根因为等长偏差超25mil，调整布线后解决。"></textarea>
+        <div id="bugContentEditor"></div>
       </div>
       <div class="field" style="margin-bottom:10px">
         <label>附图（可选，可多选）</label>
@@ -1668,6 +1916,9 @@ async function renderBug(main){
 
   sidebar.querySelectorAll('[data-cat]').forEach(el=>el.onclick=()=>{State.bugCategoryFilter=el.dataset.cat;renderMain();closeSidebar()});
   sidebar.querySelectorAll('[data-sev]').forEach(el=>el.onclick=()=>{State.bugSeverityFilter=el.dataset.sev;renderMain();closeSidebar()});
+  // 挂载富文本编辑器
+  _bugContentEditor=createRichEditor({placeholder:'详细描述问题现象、复现条件、排查过程、根因和解决方案...',minHeight:80,compact:true});
+  $('#bugContentEditor').appendChild(_bugContentEditor.element);
   $('#bugSaveBtn').onclick=saveBug;
   if($('#exportBugBtn'))$('#exportBugBtn').onclick=exportBugs;
   // 图片预览
@@ -1699,18 +1950,22 @@ async function renderBug(main){
 }
 
 let _bugPendingImages=[];
+let _bugContentEditor=null;
+let _sopEditor=null;
 
 async function saveBug(){
   const title=$('#bugTitle').value.trim();
-  const content=$('#bugContent').value.trim();
-  if(!title&&!content){toast('请输入标题或内容','warn');return}
+  const contentHtml=_bugContentEditor?_bugContentEditor.getValue():'';
+  const contentText=stripHtml(contentHtml).trim();
+  if(!title&&!contentText){toast('请输入标题或内容','warn');return}
   const images=(window._bugPendingImages||[]).slice();
-  const classifyInput=[title,content].join(' ');
+  const classifyInput=[title,contentText].join(' ');
   const result=classifyBug(classifyInput);
-  const obj={id:uid(),title:title||content.slice(0,30),content,category:result.cat,severity:result.severity,tags:[],images,createdAt:Date.now(),updatedAt:Date.now(),summary:null};
+  const obj={id:uid(),title:title||contentText.slice(0,30),content:contentHtml,category:result.cat,severity:result.severity,tags:[],images,createdAt:Date.now(),updatedAt:Date.now(),summary:null};
   await DB.put('bugs',obj);
   State.bugs.push(obj);
   window._bugPendingImages=[];
+  if(_bugContentEditor)_bugContentEditor.setValue('');
   toast(`已保存，类型「${BUG_CAT_MAP[result.cat].name}」· 严重程度「${SEV_MAP[result.severity].name}」${result.uncertain?'（建议确认）':''}`,'success');
   renderMain();
 }
@@ -1723,7 +1978,7 @@ function renderBugCard(b){
     <div style="display:flex;align-items:flex-start;gap:8px">
       <div style="flex:1;min-width:0">
         <div style="font-size:14px;font-weight:600">${escapeHtml(b.title)}</div>
-        ${b.content?`<div style="font-size:13px;color:var(--text-2);margin-top:4px;white-space:pre-wrap;line-height:1.6">${escapeHtml(b.content)}</div>`:''}
+        ${b.content?`<div class="rich-content" style="font-size:13px;color:var(--text-2);margin-top:4px;line-height:1.6">${renderContent(b.content)}</div>`:''}
         ${imagesHtml}
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px">
           <span class="badge" style="background:${cat.color}20;color:${cat.color}">${cat.emoji} ${cat.name}</span>
@@ -1752,9 +2007,9 @@ async function deleteBug(id){
 
 async function editBug(id){
   const b=State.bugs.find(x=>x.id===id);if(!b)return;
-  const res=await promptBox('编辑Bug',{fields:[
+  const res=await richPromptBox('编辑Bug',{fields:[
     {id:'title',label:'标题',value:b.title},
-    {id:'content',label:'详细描述',type:'textarea',rows:6,value:b.content||''},
+    {id:'content',label:'详细描述',type:'rich',value:b.content||'',minHeight:200},
   ]});
   if(res===null)return;
   b.title=res.title.trim();b.content=res.content;b.updatedAt=Date.now();
@@ -1797,7 +2052,7 @@ async function aiSummaryBug(id){
   toast('正在生成摘要...','info',4000);
   try{
     const sys='你是服务器硬件电路工程领域的Bug分析助手。请用1-2句话精炼总结以下Bug的核心问题、根因和解决方案，并给出1-3个标签（逗号分隔）。输出格式：第一行摘要，第二行"标签:tag1,tag2"';
-    const user=`标题：${b.title}\n内容：${b.content||''}`;
+    const user=`标题：${b.title}\n内容：${stripHtml(b.content||'')}`;
     const resp=await LLM.chat([{role:'system',content:sys},{role:'user',content:user}]);
     const lines=resp.trim().split('\n');
     let summary=resp,tags=b.tags||[];
@@ -1821,7 +2076,7 @@ async function exportBugs(){
     list.forEach((b,i)=>{
       const sev=SEV_MAP[b.severity]||SEV_MAP.normal;
       md+=`### ${i+1}. [${sev.emoji}${sev.name}] ${b.title}\n\n`;
-      if(b.content)md+=`${b.content}\n\n`;
+      if(b.content)md+=`${stripHtml(b.content)}\n\n`;
       md+=`- 严重程度：${sev.name}\n- 记录日期：${fmtDate(b.createdAt)}\n`;
       if(b.summary)md+=`- **摘要**：${b.summary}\n`;
       md+='\n---\n\n';
@@ -1877,12 +2132,13 @@ async function renderSop(main){
         <div class="sop-pane-head"><h3>${svg(ICONS.file,14)} SOP输出</h3>
           <div style="display:flex;gap:6px">
             <button class="btn btn-ghost btn-sm" id="sopSaveBtn" title="保存到历史">💾 保存</button>
-            <button class="btn btn-ghost btn-sm" id="sopExportBtn" title="导出Markdown">⬇️ 导出</button>
+            <button class="btn btn-ghost btn-sm" id="sopExportBtn" title="导出">⬇️ 导出</button>
             <button class="btn btn-ghost btn-sm" id="sopPrintBtn" title="打印PDF">🖨️ 打印</button>
           </div>
         </div>
-        <div class="sop-pane-body sop-output" id="sopOutput">
-          ${State.sopOutputMd?marked.parse(State.sopOutputMd):`<div class="empty-state"><div class="emoji">🚀</div><h3>等待整理</h3><p>上传资料或粘贴文本后，点击整理按钮</p></div>`}
+        <div id="sopToolbarContainer" style="border-bottom:1px solid var(--border)"></div>
+        <div class="sop-pane-body sop-output" id="sopOutput" contenteditable="true" style="outline:none">
+          ${State.sopOutputHtml?State.sopOutputHtml:(State.sopOutputMd?marked.parse(State.sopOutputMd):`<div class="empty-state"><div class="emoji">🚀</div><h3>等待整理</h3><p>上传资料或粘贴文本后，点击整理按钮</p></div>`)}
         </div>
       </div>
     </div>`;
@@ -1897,12 +2153,47 @@ async function renderSop(main){
   drop.ondragleave=()=>drop.classList.remove('dragover');
   drop.ondrop=e=>{e.preventDefault();drop.classList.remove('dragover');if(e.dataTransfer.files[0])parseSopFile(e.dataTransfer.files[0])};
   $('#sopText').oninput=e=>{State.sopSourceText=e.target.value};
-  $('#sopClearBtn').onclick=()=>{State.sopSourceText='';State.sopOutputMd='';$('#sopText').value='';renderMain()};
+  $('#sopClearBtn').onclick=()=>{State.sopSourceText='';State.sopOutputMd='';State.sopOutputHtml='';$('#sopText').value='';renderMain()};
   $('#sopLocalBtn').onclick=()=>generateSopLocal();
   if($('#sopAIBtn'))$('#sopAIBtn').onclick=()=>generateSopAI();
   $('#sopSaveBtn').onclick=saveSop;
   $('#sopExportBtn').onclick=exportSop;
-  $('#sopPrintBtn').onclick=()=>{const w=window.open('','_blank');w.document.write('<html><head><title>SOP</title><style>body{font-family:sans-serif;padding:40px;line-height:1.7}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:6px}pre{background:#f6f8fa;padding:8px;overflow-x:auto}</style></head><body>'+$('#sopOutput').innerHTML+'</body></html>');w.document.close();w.print()};
+  $('#sopPrintBtn').onclick=()=>{const w=window.open('','_blank');w.document.write('<html><head><title>SOP</title><style>body{font-family:sans-serif;padding:40px;line-height:1.7}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:6px}pre{background:#f6f8fa;padding:8px;overflow-x:auto}img{max-width:100%}</style></head><body>'+$('#sopOutput').innerHTML+'</body></html>');w.document.close();w.print()};
+  // 挂载SOP富文本工具栏
+  _sopEditor=createRichEditor({placeholder:'',minHeight:0,compact:false});
+  // 只用工具栏，不用编辑区
+  const sopToolbar=_sopEditor.element.querySelector('.rich-toolbar');
+  $('#sopToolbarContainer').appendChild(sopToolbar);
+  // 工具栏按钮操作SOP输出区
+  sopToolbar.querySelectorAll('button,select,input').forEach(btn=>{
+    const origHandler=btn.onclick||btn.onchange;
+    const cmd=btn.dataset.cmd;
+    if(btn.tagName==='SELECT'){
+      btn.onchange=()=>{const v=btn.value;if(v&&v!==''){$('#sopOutput').focus();document.execCommand(cmd,false,v);btn.value=''}};
+    }else if(btn.type==='color'){
+      btn.onchange=()=>{$('#sopOutput').focus();document.execCommand(cmd,false,btn.value)};
+    }else if(cmd){
+      btn.onmousedown=(e)=>{e.preventDefault()};
+      btn.onclick=()=>{
+        $('#sopOutput').focus();
+        const val=btn.dataset.val||null;
+        if(cmd==='insertImage'){
+          const input=document.createElement('input');input.type='file';input.accept='image/*';
+          input.onchange=()=>{const f=input.files[0];if(!f)return;if(f.size>5*1024*1024){toast('图片不能超过5MB','error');return}const reader=new FileReader();reader.onload=()=>{document.execCommand('insertHTML',false,`<img src="${reader.result}" alt="图片">`)};reader.readAsDataURL(f)};
+          input.click();
+        }else if(cmd==='insertTable'){
+          let html='<table><tbody>';for(let r=0;r<3;r++){html+='<tr>';for(let c=0;c<3;c++){html+='<td>单元格</td>'}html+='</tr>'}html+='</tbody></table><p><br></p>';
+          document.execCommand('insertHTML',false,html);
+        }else if(cmd==='insertLink'){
+          const url=prompt('请输入链接地址：','https://');if(url)document.execCommand('createLink',false,url);
+        }else{
+          document.execCommand(cmd,false,val);
+        }
+      };
+    }
+  });
+  // 移除富编辑器的编辑区域（只保留工具栏）
+  _sopEditor.element.remove();
   $('#sopHistoryBtn').onclick=showSopHistory;
   // 移动端 SOP tab 切换
   $$('#sopMobileTabs .sop-mobile-tab').forEach(t=>t.onclick=()=>{
@@ -1973,7 +2264,8 @@ function generateSopLocal(){
     source:'本地规则整理',
   });
   State.sopOutputMd=md;
-  $('#sopOutput').innerHTML=marked.parse(md);
+  State.sopOutputHtml=marked.parse(md);
+  $('#sopOutput').innerHTML=State.sopOutputHtml;
   toast('已整理为SOP（本地规则模式）','success');
   sopSwitchToOutput();
 }
@@ -1998,7 +2290,8 @@ async function generateSopAI(){
 保持专业、简洁、可操作。步骤要具体到可执行层面。`;
     const resp=await LLM.chat([{role:'system',content:sys},{role:'user',content:'请整理以下资料为SOP：\n\n'+text.slice(0,8000)}],{maxTokens:3000});
     State.sopOutputMd=resp;
-    $('#sopOutput').innerHTML=marked.parse(resp);
+    State.sopOutputHtml=marked.parse(resp);
+    $('#sopOutput').innerHTML=State.sopOutputHtml;
     toast('AI已整理完成','success');
     sopSwitchToOutput();
   }catch(e){toast('整理失败：'+e.message,'error',5000)}
@@ -2022,18 +2315,29 @@ function buildSopMarkdown(o){
 }
 
 async function saveSop(){
-  if(!State.sopOutputMd){toast('暂无SOP内容','warn');return}
-  const sop={id:uid(),title:(State.sopOutputMd.match(/^#\s+(.+)$/m)||[])[1]||'未命名SOP',content:State.sopOutputMd,createdAt:Date.now()};
+  const html=$('#sopOutput').innerHTML.trim();
+  if(!html||html.includes('empty-state')){toast('暂无SOP内容','warn');return}
+  // 提取标题
+  let title='未命名SOP';
+  const h1Match=html.match(/<h1[^>]*>(.*?)<\/h1>/i);
+  if(h1Match)title=stripHtml(h1Match[1]).trim();
+  else{const h2Match=html.match(/<h2[^>]*>(.*?)<\/h2>/i);if(h2Match)title=stripHtml(h2Match[1]).trim()}
+  const sop={id:uid(),title,content:html,createdAt:Date.now()};
   await DB.put('sops',sop);
   State.sops.push(sop);
   toast('SOP已保存到历史','success');
 }
 
 async function exportSop(){
-  if(!State.sopOutputMd){toast('暂无SOP内容','warn');return}
-  const title=(State.sopOutputMd.match(/^#\s+(.+)$/m)||[])[1]||'SOP';
-  const blob=new Blob([State.sopOutputMd],{type:'text/markdown'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${title}_${todayStr()}.md`;a.click();
+  const html=$('#sopOutput').innerHTML.trim();
+  if(!html||html.includes('empty-state')){toast('暂无SOP内容','warn');return}
+  let title='SOP';
+  const h1Match=html.match(/<h1[^>]*>(.*?)<\/h1>/i);
+  if(h1Match)title=stripHtml(h1Match[1]).trim();
+  // 导出为HTML文件
+  const fullHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;padding:40px;line-height:1.7;max-width:800px;margin:0 auto}table{border-collapse:collapse;width:100%;margin:8px 0}td,th{border:1px solid #ccc;padding:6px}pre{background:#f6f8fa;padding:8px;overflow-x:auto}img{max-width:100%}h1{font-size:24px;border-bottom:2px solid #ef4444;padding-bottom:6px}h2{font-size:18px;color:#ef4444}blockquote{border-left:3px solid #f59e0b;background:#fef3c7;padding:8px 14px;margin:10px 0}</style></head><body>${html}</body></html>`;
+  const blob=new Blob([fullHtml],{type:'text/html'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${title}_${todayStr()}.html`;a.click();
   toast('已导出','success');
 }
 
@@ -2051,7 +2355,7 @@ async function showSopHistory(){
     const id=e.target.dataset.id||e.target.closest('[data-id]')?.dataset.id;
     if(!id)return;
     const act=e.target.dataset.act;
-    if(act==='load'){const s=State.sops.find(x=>x.id===id);if(s){State.sopOutputMd=s.content;mask.remove();renderMain();toast('已载入','success')}}
+    if(act==='load'){const s=State.sops.find(x=>x.id===id);if(s){State.sopOutputHtml=isRichContent(s.content)?s.content:marked.parse(s.content||'');State.sopOutputMd='';mask.remove();renderMain();toast('已载入','success')}}
     else if(act==='del'){await DB.del('sops',id);State.sops=State.sops.filter(x=>x.id!==id);mask.remove();toast('已删除','success');showSopHistory()}
   });
 }
@@ -2315,7 +2619,7 @@ async function exportAsMarkdown(){
         const date=k.updatedAt?new Date(k.updatedAt).toLocaleDateString('zh-CN'):'';
         md+=`#### ${date}\n\n`;
         if(k.summary)md+=`> **摘要**：${escapeMd(k.summary)}\n\n`;
-        md+=`${escapeMd(k.content||'')}\n\n`;
+        md+=`${escapeMd(stripHtml(k.content||''))}\n\n`;
         if(k.tags&&k.tags.length>0)md+=`标签：${k.tags.map(t=>'\`'+escapeMd(t)+'\`').join(' ')}\n\n`;
       }
     }
@@ -2333,7 +2637,7 @@ async function exportAsMarkdown(){
       for(const c of byCat[catId]){
         const date=c.createdAt?new Date(c.createdAt).toLocaleDateString('zh-CN'):'';
         md+=`#### ${escapeMd(c.name||'未命名')} （${date}）\n\n`;
-        if(c.description)md+=`${escapeMd(c.description)}\n\n`;
+        if(c.note)md+=`${escapeMd(stripHtml(c.note))}\n\n`;
         if(c.fileType)md+=`文件类型：\`${c.fileType}\`\n\n`;
       }
     }
@@ -2353,7 +2657,7 @@ async function exportAsMarkdown(){
         const date=b.createdAt?new Date(b.createdAt).toLocaleDateString('zh-CN'):'';
         md+=`#### ${sev.emoji} [${escapeMd(sev.name)}] ${escapeMd(b.title||'未命名')} （${date}）\n\n`;
         if(b.summary)md+=`> **摘要**：${escapeMd(b.summary)}\n\n`;
-        md+=`${escapeMd(b.description||'')}\n\n`;
+        md+=`${escapeMd(stripHtml(b.description||b.content||''))}\n\n`;
         if(b.solution)md+=`**解决方案**：${escapeMd(b.solution)}\n\n`;
       }
     }
@@ -2366,7 +2670,7 @@ async function exportAsMarkdown(){
     for(const s of State.sops){
       const date=s.createdAt?new Date(s.createdAt).toLocaleDateString('zh-CN'):'';
       md+=`### ${escapeMd(s.title||'未命名')} （${date}）\n\n`;
-      md+=`${s.content||''}\n\n`;
+      md+=`${escapeMd(stripHtml(s.content||''))}\n\n`;
     }
     md+=`---\n\n`;
   }

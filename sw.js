@@ -1,6 +1,6 @@
 // 工程师工作台 Service Worker
 // 网络优先策略：保证已安装的 PWA 应用总能拿到最新版
-const CACHE_NAME = 'engineer-workbench-v2';
+const CACHE_NAME = 'engineer-workbench-v3';
 const CORE_ASSETS = [
   './',
   './index.html',
